@@ -1,0 +1,12 @@
+.gitkeep
+.env*
+*.ico
+*.lock
+src/db/drizzle
+.next
+.yarn
+.pnp.*
+node_modules
+README.md
+pnpm-lock.yaml
+package-lock.json
