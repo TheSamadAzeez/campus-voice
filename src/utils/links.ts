@@ -14,17 +14,17 @@ export const studentLinks: NavLink[] = [
   },
   {
     label: 'My Complaints',
-    href: '/student/my-complaints',
+    href: '/student/complaints',
     icon: NotepadText,
   },
   {
     label: 'Submit Complaint',
-    href: '/student/submit-complaint',
+    href: '/student/complaints/submit',
     icon: NotebookPen,
   },
   {
     label: 'My Profile',
-    href: '/student/my-profile',
+    href: '/student/profile',
     icon: User,
   },
 ]
