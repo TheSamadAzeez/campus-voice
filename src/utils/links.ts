@@ -1,22 +1,30 @@
-export const studentLinks = [
+import { LayoutDashboard, LucideIcon, NotebookPen, NotepadText, User } from 'lucide-react'
+
+interface NavLink {
+  label: string
+  href: string
+  icon: LucideIcon
+}
+
+export const studentLinks: NavLink[] = [
   {
     label: 'Dashboard',
     href: '/student',
-    icon: '',
+    icon: LayoutDashboard,
   },
   {
     label: 'My Complaints',
     href: '/student/my-complaints',
-    icon: '',
+    icon: NotepadText,
   },
   {
     label: 'Submit Complaint',
     href: '/student/submit-complaint',
-    icon: '',
+    icon: NotebookPen,
   },
   {
     label: 'My Profile',
     href: '/student/my-profile',
-    icon: '',
+    icon: User,
   },
 ]
