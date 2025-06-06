@@ -3,7 +3,7 @@
 import { Activity, AlertCircle, CheckCircle2, Clock, LucideIcon } from 'lucide-react'
 import { ChartAreaGradient } from './components/area-chart'
 import { Statistics } from './components/statistics'
-import { TableComponent } from './components/table'
+import { TableComponent } from '../../components/custom/table'
 
 // Mock data for demonstration
 
@@ -18,22 +18,22 @@ interface ComplaintStats {
 const RECENT_ACTIVITIES = [
   {
     id: 1,
-    type: 'Complaint Submitted',
-    description: 'Noise complaint in Library',
+    title: 'Noise complaint in Library',
+    category: 'Facilities',
     status: 'pending',
     date: '2024-03-20',
   },
   {
     id: 2,
-    type: 'Complaint Resolved',
-    description: 'Cafeteria cleanliness issue',
+    title: 'Cafeteria cleanliness issue',
+    category: 'Facilities',
     status: 'resolved',
     date: '2024-03-19',
   },
   {
     id: 3,
-    type: 'Complaint In Review',
-    description: 'Dormitory maintenance request',
+    title: 'Dormitory maintenance request',
+    category: 'Facilities',
     status: 'in-review',
     date: '2024-03-18',
   },
@@ -80,7 +80,7 @@ export default function StudentPage() {
         <ChartAreaGradient />
       </div>
       {/* Recent Activities */}
-      <TableComponent activities={RECENT_ACTIVITIES} />
+      <TableComponent data={RECENT_ACTIVITIES} dashboard />
     </div>
   )
 }
