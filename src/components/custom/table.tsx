@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { getStatusColor } from '@/utils/status'
 import { Eye } from 'lucide-react'
 import { ScrollArea } from '../ui/scroll-area'
+import Link from 'next/link'
 
 interface Activity {
   id: number
@@ -35,18 +36,20 @@ export function TableComponent({ data, dashboard = false }: { data: Activity[]; 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((activity) => (
-                <TableRow key={activity.id}>
-                  <TableCell className="capitalize">{activity.title}</TableCell>
-                  <TableCell className="capitalize">{activity.category}</TableCell>
+              {data.map((complaint) => (
+                <TableRow key={complaint.id}>
+                  <TableCell className="capitalize">{complaint.title}</TableCell>
+                  <TableCell className="capitalize">{complaint.category}</TableCell>
                   <TableCell>
-                    <Badge variant={'outline'} className={getStatusColor(activity.status.toLowerCase())}>
-                      {activity.status.toLowerCase()}
+                    <Badge variant={'outline'} className={getStatusColor(complaint.status.toLowerCase())}>
+                      {complaint.status.toLowerCase()}
                     </Badge>
                   </TableCell>
-                  <TableCell>{activity.date}</TableCell>
+                  <TableCell>{complaint.date}</TableCell>
                   <TableCell className="flex justify-center">
-                    <Eye className="size-4" color="#f66426" strokeWidth={2} />
+                    <Link href={`/student/complaints/${complaint.id}`}>
+                      <Eye className="size-4" color="#f66426" strokeWidth={2} />
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))}
