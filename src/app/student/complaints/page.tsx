@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { CirclePlus, Plus } from 'lucide-react'
+import { CirclePlus } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -103,6 +103,7 @@ export default function ComplaintsPage() {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="In-review">In Review</SelectItem>
                 <SelectItem value="Resolved">Resolved</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
               </SelectContent>
             </Select>
           </div>
