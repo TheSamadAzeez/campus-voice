@@ -9,6 +9,7 @@ import Link from 'next/link'
 interface Activity {
   id: number
   title: string
+  faculty?: string
   category: string
   status: string
   date: string
@@ -30,6 +31,7 @@ export function TableComponent({ data, dashboard = false }: { data: Activity[]; 
               <TableRow>
                 <TableHead>Title</TableHead>
                 <TableHead>Category</TableHead>
+                {data[0].faculty ? <TableHead>Faculty</TableHead> : null}
                 <TableHead>Status</TableHead>
                 <TableHead>Date Submitted</TableHead>
                 <TableHead className="flex justify-center">Actions</TableHead>
@@ -40,6 +42,7 @@ export function TableComponent({ data, dashboard = false }: { data: Activity[]; 
                 <TableRow key={complaint.id}>
                   <TableCell className="capitalize">{complaint.title}</TableCell>
                   <TableCell className="capitalize">{complaint.category}</TableCell>
+                  {data[0]?.faculty ? <TableCell className="capitalize">{complaint.faculty}</TableCell> : null}
                   <TableCell>
                     <Badge variant={'outline'} className={getStatusColor(complaint.status.toLowerCase())}>
                       {complaint.status.toLowerCase()}
