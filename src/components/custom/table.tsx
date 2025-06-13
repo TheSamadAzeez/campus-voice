@@ -15,7 +15,15 @@ interface Activity {
   date: string
 }
 
-export function TableComponent({ data, dashboard = false }: { data: Activity[]; dashboard?: boolean }) {
+export function TableComponent({
+  data,
+  dashboard = false,
+  admin = false,
+}: {
+  data: Activity[]
+  dashboard?: boolean
+  admin?: boolean
+}) {
   return (
     <Card>
       <CardHeader>
@@ -50,7 +58,7 @@ export function TableComponent({ data, dashboard = false }: { data: Activity[]; 
                   </TableCell>
                   <TableCell>{complaint.date}</TableCell>
                   <TableCell className="flex justify-center">
-                    <Link href={`/student/complaints/${complaint.id}`}>
+                    <Link href={admin ? `/admin/complaints/${complaint.id}` : `/student/complaints/${complaint.id}`}>
                       <Eye className="size-4" color="#f66426" strokeWidth={2} />
                     </Link>
                   </TableCell>
