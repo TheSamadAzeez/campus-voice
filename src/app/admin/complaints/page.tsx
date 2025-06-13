@@ -104,7 +104,7 @@ export default function AllComplaintsPage() {
         </CardContent>
       </Card>
 
-      <TableComponent data={filteredComplaints} />
+      <TableComponent data={filteredComplaints} admin />
     </div>
   )
 }
