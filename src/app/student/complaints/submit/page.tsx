@@ -13,6 +13,8 @@ const CATEGORIES = ['Academic', 'Faculty Issue', 'Result Delay', 'Harassment', '
 
 const RESOLUTION_TYPES = ['Immediate Action', 'Investigation Required', 'Policy Change', 'No Specific Preference']
 
+const FACULTIES = ['Science', 'Management Science', 'Arts', 'Law', 'Transport', 'Education', 'Other']
+
 export default function SubmitComplaintPage() {
   return (
     <Card className="mx-auto w-[70%] border-none shadow-lg">
@@ -36,6 +38,24 @@ export default function SubmitComplaintPage() {
                 {CATEGORIES.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Faculty Selection */}
+          <div className="flex flex-col gap-2">
+            <Label className="font-medium text-gray-700">Faculty *</Label>
+
+            <Select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a faculty" />
+              </SelectTrigger>
+              <SelectContent>
+                {FACULTIES.map((faculty) => (
+                  <SelectItem key={faculty} value={faculty}>
+                    {faculty}
                   </SelectItem>
                 ))}
               </SelectContent>
