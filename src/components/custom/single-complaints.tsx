@@ -13,6 +13,7 @@ interface Complaint {
   id: string
   title: string
   category: string
+  faculty: string
   status: string
   dateSubmitted: string
   description: string
@@ -53,14 +54,26 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div>
-                <h3 className="mb-2 flex items-center gap-2 font-semibold">
-                  <FileText className="size-4" />
-                  Category
-                </h3>
-                <Badge variant="outline" className="px-3 py-1 text-sm">
-                  {complaint.category}
-                </Badge>
+              <div className="flex w-75 items-center justify-between">
+                <div>
+                  <h3 className="mb-2 flex items-center gap-2 font-semibold">
+                    <FileText className="size-4" />
+                    Category
+                  </h3>
+                  <Badge variant="outline" className="px-3 py-1 text-sm">
+                    {complaint.category}
+                  </Badge>
+                </div>
+
+                <div>
+                  <h3 className="mb-2 flex items-center gap-2 font-semibold">
+                    <FileText className="size-4" />
+                    Faculty
+                  </h3>
+                  <Badge variant="outline" className="px-3 py-1 text-sm capitalize">
+                    {complaint.faculty}
+                  </Badge>
+                </div>
               </div>
               <div>
                 <h3 className="mb-2 flex items-center gap-2 font-semibold">
