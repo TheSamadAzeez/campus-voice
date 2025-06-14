@@ -7,7 +7,7 @@ import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '
 const chartData = [
   { faculty: 'science', complaints: 275, fill: 'var(--color-chrome)' },
   { faculty: 'law', complaints: 200, fill: 'var(--color-safari)' },
-  { faculty: 'arts', complaints: 187, fill: 'var(--color-firefox)' },
+  { faculty: 'art', complaints: 187, fill: 'var(--color-firefox)' },
   { faculty: 'education', complaints: 173, fill: 'purple' },
   { faculty: 'management science', complaints: 173, fill: 'var(--color-edge)' },
   { faculty: 'transport', complaints: 173, fill: 'var(--color-edge)' },
