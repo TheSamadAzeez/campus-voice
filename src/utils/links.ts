@@ -1,4 +1,4 @@
-import { LayoutDashboard, LucideIcon, NotebookPen, NotepadText, User, Users } from 'lucide-react'
+import { LayoutDashboard, LucideIcon, NotebookPen, NotepadText, Users } from 'lucide-react'
 
 interface NavLink {
   label: string
@@ -21,11 +21,6 @@ export const studentLinks: NavLink[] = [
     label: 'Submit Complaint',
     href: '/student/complaints/submit',
     icon: NotebookPen,
-  },
-  {
-    label: 'My Profile',
-    href: '/student/profile',
-    icon: User,
   },
 ]
 
