@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { getStatusColor, getStatusUpdateColor } from '@/utils/status'
-import { Clock, FileText, MessageSquare } from 'lucide-react'
+import { Clock, FileText, GraduationCap, MessageSquare } from 'lucide-react'
 
 interface Complaint {
   id: string
@@ -67,7 +67,7 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
 
                 <div>
                   <h3 className="mb-2 flex items-center gap-2 font-semibold">
-                    <FileText className="size-4" />
+                    <GraduationCap className="size-4" />
                     Faculty
                   </h3>
                   <Badge variant="outline" className="px-3 py-1 text-sm capitalize">
