@@ -1,18 +1,51 @@
+'use client'
+
+import { cn } from '@/lib/utils'
+import { SignOutButton, useUser } from '@clerk/nextjs'
 import { Bell, LogOut, MessageSquareText, User } from 'lucide-react'
+import Image from 'next/image'
+import { Suspense, useEffect, useState } from 'react'
+import { Roles } from '../../../types/globals'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Button } from '../ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Separator } from '../ui/separator'
-import { cn } from '@/lib/utils'
 
 interface UserData {
   name: string
   email: string
   avatar: string
-  role: 'student' | 'admin'
+  role: Roles
+  username: string
 }
 
-export function Header({ userData }: { userData: UserData }) {
+export function Header() {
+  const { isLoaded, user } = useUser()
+
+  const [userData, setUserData] = useState<UserData>({
+    email: '',
+    name: '',
+    username: '',
+    avatar: '',
+    role: 'student' as Roles,
+  })
+
+  useEffect(() => {
+    if (user) {
+      setUserData({
+        email: user.emailAddresses[0]?.emailAddress as string,
+        name: user.fullName as string,
+        username: user.username as string,
+        avatar: user.imageUrl as string,
+        role: user.publicMetadata?.role as Roles,
+      })
+    }
+  }, [user])
+
+  if (!isLoaded) {
+    return null // or a loading spinner
+  }
+
   return (
     <div className="flex items-center justify-end gap-3">
       <Button variant="outline" size="icon" className="h-10 w-10 rounded-2xl">
@@ -41,21 +74,31 @@ export function Header({ userData }: { userData: UserData }) {
                       userData.role === 'admin' && 'bg-[#ffe1cc] text-orange-500',
                     )}
                   >
-                    {userData.role}
+                    {userData.role || 'student'}
                   </span>
 
                   <div className="flex flex-col items-center justify-between gap-2">
-                    <div className="size-10 rounded-full bg-gray-200"></div>
+                    <Suspense>
+                      <Image
+                        src={userData.avatar}
+                        alt="avatar"
+                        width={40}
+                        height={40}
+                        className="size-10 rounded-full bg-gray-200"
+                      />
+                    </Suspense>
 
                     <div className="flex flex-col items-center justify-center gap-1">
-                      <h1 className="text-sm font-medium capitalize">{userData.name}</h1>
-                      <p className="text-xs text-gray-500">{userData.email.toLowerCase()}</p>
+                      <h1 className="text-sm font-medium capitalize">{userData.name || userData.username}</h1>
+                      <p className="text-xs text-gray-500">{userData.email?.toLowerCase()}</p>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="icon" className="h-10 w-10 rounded-2xl" role="logout">
-                        <LogOut className="size-4" />
-                      </Button>
+                      <SignOutButton redirectUrl="/">
+                        <Button variant="outline" size="icon" className="h-10 w-10 rounded-2xl" role="logout">
+                          <LogOut className="size-4" />
+                        </Button>
+                      </SignOutButton>
                     </div>
                   </div>
                 </div>
