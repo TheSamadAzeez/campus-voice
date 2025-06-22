@@ -10,7 +10,14 @@
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,mjs}\"",
     "typecheck": "tsc --noEmit",
     "lint-staged": "lint-staged",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:push:force": "drizzle-kit push --force",
+    "db:reset": "drizzle-kit reset",
+    "db:dev": "drizzle-kit dev",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",
@@ -24,8 +31,11 @@
     "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.44.2",
     "lucide-react": "^0.488.0",
     "next": "15.3.0",
+    "pg": "^8.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.3",
@@ -37,8 +47,10 @@
     "@commitlint/config-conventional": "^19.8.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.15.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.1",
     "eslint": "^8.57.1",
     "eslint-config-next": "15.1.3",
     "eslint-config-prettier": "^9.1.0",
@@ -48,6 +60,7 @@
     "prettier": "3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^4",
+    "tsx": "^4.20.3",
     "typescript": "^5"
   },
   "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971"
