@@ -27,11 +27,12 @@ export async function POST(req: NextRequest) {
         lastName: last_name || '',
         imageUrl: image_url || '',
         role,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
       }
+      console.log('Creating user ...')
 
       await createUser(user)
+
+      console.log('User created successfully ...')
     }
 
     // Update user
@@ -43,6 +44,8 @@ export async function POST(req: NextRequest) {
         last_name,
         image_url,
         public_metadata,
+        created_at,
+        updated_at,
       } = evt.data as UserJSON
       const emailAddress = email_addresses?.[0]?.email_address || null
       const role: 'student' | 'admin' = public_metadata?.role === 'admin' ? 'admin' : 'student'
@@ -54,17 +57,25 @@ export async function POST(req: NextRequest) {
         lastName: last_name || '',
         imageUrl: image_url || '',
         role,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Number.isFinite(created_at) ? new Date(created_at).toISOString() : new Date().toISOString(),
+        updatedAt: Number.isFinite(updated_at) ? new Date(updated_at).toISOString() : new Date().toISOString(),
       }
 
+      console.log('Updating user ...')
       await updateUser(user)
+
+      console.log('User updated successfully ...')
     }
 
     // Delete user
     if (evt.type === 'user.deleted') {
       const { id: clerkUserId } = evt.data as DeletedObjectJSON
+
+      console.log('Deleting user ...')
+
       await deleteUser(clerkUserId || '')
+
+      console.log('User deleted successfully ...')
     }
 
     return new Response('Webhook received', { status: 200 })
