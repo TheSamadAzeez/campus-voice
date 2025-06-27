@@ -11,12 +11,12 @@ import { Separator } from '../ui/separator'
 import { getUserByClerkUserId } from '@/utils/actions'
 
 export async function Header() {
-  const { userId, redirectToSignIn } = await auth()
+  const { userId, redirectToSignUp } = await auth()
 
   const user = await getUserByClerkUserId(userId || '')
 
   if (!user) {
-    return redirectToSignIn()
+    return redirectToSignUp()
   }
 
   return (
