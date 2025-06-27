@@ -1,5 +1,4 @@
 import { cn } from '@/lib/utils'
-import { auth } from '@clerk/nextjs/server'
 import { SignOutButton } from '@clerk/nextjs'
 import { Bell, LogOut, MessageSquareText, User } from 'lucide-react'
 import Image from 'next/image'
@@ -11,12 +10,10 @@ import { Separator } from '../ui/separator'
 import { getUserByClerkUserId } from '@/utils/actions'
 
 export async function Header() {
-  const { userId, redirectToSignUp } = await auth()
-
-  const user = await getUserByClerkUserId(userId || '')
+  const user = await getUserByClerkUserId()
 
   if (!user) {
-    return redirectToSignUp()
+    return null
   }
 
   return (

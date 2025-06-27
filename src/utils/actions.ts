@@ -1,5 +1,6 @@
 import { db } from '@/db'
 import { usersTable } from '@/db/schema'
+import { authUser } from './helper-functions'
 import { eq } from 'drizzle-orm'
 
 export async function createUser(user: typeof usersTable.$inferInsert) {
@@ -24,11 +25,17 @@ export async function updateUser(user: typeof usersTable.$inferSelect) {
 }
 
 export async function deleteUser(clerkUserId: string) {
-  await db.delete(usersTable).where(eq(usersTable.clerkUserId, clerkUserId))
+  try {
+    await db.delete(usersTable).where(eq(usersTable.clerkUserId, clerkUserId))
+  } catch (error) {
+    console.error(error)
+    return null
+  }
 }
 
-export async function getUserByClerkUserId(clerkUserId: string) {
+export async function getUserByClerkUserId() {
   try {
+    const clerkUserId = await authUser()
     const user = await db.select().from(usersTable).where(eq(usersTable.clerkUserId, clerkUserId))
     return user[0]
   } catch (error) {
