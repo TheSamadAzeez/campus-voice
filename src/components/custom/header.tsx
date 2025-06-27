@@ -7,10 +7,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Button } from '../ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Separator } from '../ui/separator'
-import { getUserByClerkUserId } from '@/utils/actions'
+import { getUser } from '@/utils/actions'
 
 export async function Header() {
-  const user = await getUserByClerkUserId()
+  const user = await getUser()
 
   if (!user) {
     return null
