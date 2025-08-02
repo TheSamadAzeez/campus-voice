@@ -51,7 +51,7 @@ export async function Header() {
                 <div className="flex flex-col items-center justify-between gap-2">
                   <Suspense>
                     <Image
-                      src={user.imageUrl}
+                      src={user.profileImage || ''}
                       alt="avatar"
                       width={40}
                       height={40}
@@ -60,9 +60,7 @@ export async function Header() {
                   </Suspense>
 
                   <div className="flex flex-col items-center justify-center gap-1">
-                    <h1 className="text-sm font-medium capitalize">
-                      {user.firstName} {user.lastName}
-                    </h1>
+                    <h1 className="text-sm font-medium capitalize">{user.name || 'User'}</h1>
                     <p className="text-xs text-gray-500">{user.email?.toLowerCase()}</p>
                   </div>
 
