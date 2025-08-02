@@ -72,7 +72,7 @@ const COMPLAINT_STATS: ComplaintStats[] = [
 
 export default function StudentPage() {
   return (
-    <div className="container mx-auto space-y-6 p-6">
+    <div className="mx-auto w-full space-y-6 p-6">
       <h1 className="mb-6 text-3xl font-bold">Hello, Samad</h1>
       <div className="flex w-full gap-4">
         {/* Complaint Statistics */}
