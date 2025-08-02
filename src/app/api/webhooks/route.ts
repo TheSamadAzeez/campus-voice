@@ -1,7 +1,7 @@
 import { verifyWebhook } from '@clerk/nextjs/webhooks'
 import { NextRequest } from 'next/server'
 import type { DeletedObjectJSON, UserJSON } from '@clerk/nextjs/server'
-import { createUser, deleteUser, updateUser } from '@/utils/actions'
+import { createUser, deleteUser, updateUser } from '@/utils/actions/user'
 
 export async function POST(req: NextRequest) {
   try {
