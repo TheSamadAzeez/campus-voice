@@ -7,12 +7,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Button } from '../ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Separator } from '../ui/separator'
-import { getUser } from '@/utils/actions'
+import { getUser } from '@/utils/actions/user'
 
 export async function Header() {
-  const user = await getUser()
+  const { user, success } = await getUser()
 
-  if (!user) {
+  if (success === false) {
     return null
   }
 
@@ -42,16 +42,16 @@ export async function Header() {
                 <span
                   className={cn(
                     'w-fit self-end rounded-md bg-[#d4e5ff] p-3 py-1 text-xs font-medium text-blue-500',
-                    user.role === 'admin' && 'bg-[#ffe1cc] text-orange-500',
+                    user?.role === 'admin' && 'bg-[#ffe1cc] text-orange-500',
                   )}
                 >
-                  {user.role}
+                  {user?.role}
                 </span>
 
                 <div className="flex flex-col items-center justify-between gap-2">
                   <Suspense>
                     <Image
-                      src={user.profileImage || ''}
+                      src={user?.profileImage || ''}
                       alt="avatar"
                       width={40}
                       height={40}
@@ -60,8 +60,8 @@ export async function Header() {
                   </Suspense>
 
                   <div className="flex flex-col items-center justify-center gap-1">
-                    <h1 className="text-sm font-medium capitalize">{user.name || 'User'}</h1>
-                    <p className="text-xs text-gray-500">{user.email?.toLowerCase()}</p>
+                    <h1 className="text-sm font-medium capitalize">{user?.name || 'User?'}</h1>
+                    <p className="text-xs text-gray-500">{user?.email?.toLowerCase()}</p>
                   </div>
 
                   <div className="flex items-center gap-2">
