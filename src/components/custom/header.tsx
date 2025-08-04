@@ -12,10 +12,6 @@ import { getUser } from '@/utils/actions/user'
 export async function Header() {
   const { user, success } = await getUser()
 
-  if (success === false) {
-    return null
-  }
-
   return (
     <div className="flex items-center justify-end gap-3">
       <Button variant="outline" size="icon" className="h-10 w-10 rounded-2xl">
@@ -38,43 +34,71 @@ export async function Header() {
               </Button>
             </PopoverTrigger>
             <PopoverContent>
-              <div className="flex flex-col justify-center gap-2 px-1">
-                <span
-                  className={cn(
-                    'w-fit self-end rounded-md bg-[#d4e5ff] p-3 py-1 text-xs font-medium text-blue-500',
-                    user?.role === 'admin' && 'bg-[#ffe1cc] text-orange-500',
-                  )}
-                >
-                  {user?.role}
-                </span>
+              {success === false ? (
+                <div className="flex flex-col justify-center gap-2 px-1">
+                  <div className="flex flex-col items-center justify-between gap-2">
+                    <Suspense>
+                      <Image
+                        src={'null'}
+                        alt="avatar"
+                        width={40}
+                        height={40}
+                        className="size-10 rounded-full bg-gray-200"
+                      />
+                    </Suspense>
 
-                <div className="flex flex-col items-center justify-between gap-2">
-                  <Suspense>
-                    <Image
-                      src={user?.profileImage || ''}
-                      alt="avatar"
-                      width={40}
-                      height={40}
-                      className="size-10 rounded-full bg-gray-200"
-                    />
-                  </Suspense>
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      <h1 className="text-sm font-medium capitalize">{'User'}</h1>
+                    </div>
 
-                  <div className="flex flex-col items-center justify-center gap-1">
-                    <h1 className="text-sm font-medium capitalize">
-                      {`${user?.firstName} ${user?.lastName}` || 'User'}
-                    </h1>
-                    <p className="text-xs text-gray-500">{user?.email?.toLowerCase()}</p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <SignOutButton redirectUrl="/">
-                      <Button variant="outline" size="icon" className="h-10 w-10 rounded-2xl" role="logout">
-                        <LogOut className="size-4" />
-                      </Button>
-                    </SignOutButton>
+                    <div className="flex items-center gap-2">
+                      <SignOutButton redirectUrl="/">
+                        <Button variant="outline" size="icon" className="h-10 w-10 rounded-2xl" role="logout">
+                          <LogOut className="size-4" />
+                        </Button>
+                      </SignOutButton>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col justify-center gap-2 px-1">
+                  <span
+                    className={cn(
+                      'w-fit self-end rounded-md bg-[#d4e5ff] p-3 py-1 text-xs font-medium text-blue-500',
+                      user?.role === 'admin' && 'bg-[#ffe1cc] text-orange-500',
+                    )}
+                  >
+                    {user?.role}
+                  </span>
+
+                  <div className="flex flex-col items-center justify-between gap-2">
+                    <Suspense>
+                      <Image
+                        src={user?.profileImage || ''}
+                        alt="avatar"
+                        width={40}
+                        height={40}
+                        className="size-10 rounded-full bg-gray-200"
+                      />
+                    </Suspense>
+
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      <h1 className="text-sm font-medium capitalize">
+                        {`${user?.firstName} ${user?.lastName}` || 'User'}
+                      </h1>
+                      <p className="text-xs text-gray-500">{user?.email?.toLowerCase()}</p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <SignOutButton redirectUrl="/">
+                        <Button variant="outline" size="icon" className="h-10 w-10 rounded-2xl" role="logout">
+                          <LogOut className="size-4" />
+                        </Button>
+                      </SignOutButton>
+                    </div>
+                  </div>
+                </div>
+              )}
             </PopoverContent>
           </Popover>
         </AvatarFallback>
