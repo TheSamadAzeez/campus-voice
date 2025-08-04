@@ -15,8 +15,6 @@ export const complaintIndexes = {
   userIdIdx: index('idx_complaints_user_id').on(complaints.userId),
   statusIdx: index('idx_complaints_status').on(complaints.status),
   categoryIdx: index('idx_complaints_category').on(complaints.category),
-  facultyIdx: index('idx_complaints_faculty').on(complaints.faculty),
-  priorityIdx: index('idx_complaints_priority').on(complaints.priority),
   submittedAtIdx: index('idx_complaints_submitted_at').on(complaints.submittedAt),
 }
 
