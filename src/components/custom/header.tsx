@@ -60,7 +60,9 @@ export async function Header() {
                   </Suspense>
 
                   <div className="flex flex-col items-center justify-center gap-1">
-                    <h1 className="text-sm font-medium capitalize">{user?.name || 'User?'}</h1>
+                    <h1 className="text-sm font-medium capitalize">
+                      {`${user?.firstName} ${user?.lastName}` || 'User'}
+                    </h1>
                     <p className="text-xs text-gray-500">{user?.email?.toLowerCase()}</p>
                   </div>
 

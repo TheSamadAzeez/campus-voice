@@ -17,6 +17,8 @@ export async function POST(req: NextRequest) {
       const user = {
         id, // This is the Clerk user ID, stored as primary key
         email: emailAddress || '',
+        firstName: first_name?.trim() || '', // First name field
+        lastName: last_name?.trim() || '', // Last name field
         name: `${first_name || ''} ${last_name || ''}`.trim() || 'Unknown User', // Combined name field
         profileImage: image_url || null,
         role,
@@ -37,7 +39,8 @@ export async function POST(req: NextRequest) {
       const user = {
         id,
         email: emailAddress || '',
-        name: `${first_name || ''} ${last_name || ''}`.trim() || 'Unknown User', // Combined name field
+        firstName: first_name?.trim() || '', // First name field
+        lastName: last_name?.trim() || '', // Last name field
         profileImage: image_url || null,
         role,
         // Note: createdAt and updatedAt are automatically handled by defaultNow() in schema
