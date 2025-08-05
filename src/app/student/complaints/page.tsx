@@ -1,59 +1,43 @@
-'use client'
-
 import { TableComponent } from '@/components/custom/table'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CirclePlus } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { getUserComplaints } from '@/utils/actions/complaints'
+import { complaintCategoryEnum, complaintStatusEnum, facultyEnum, priorityEnum, resolutionTypeEnum } from '@/db/schema'
+import { redirect } from 'next/navigation'
+import ComplaintsFilters from './components/complaints-filters'
 
-// Mock data - replace with actual data from your backend
-const MOCK_COMPLAINTS = [
-  {
-    id: 1,
-    title: 'Noise in Library',
-    category: 'Facilities',
-    status: 'Pending',
-    date: '2024-03-20',
-  },
-  {
-    id: 2,
-    title: 'Course Registration Issue',
-    category: 'Academic',
-    status: 'In-review',
-    date: '2024-03-19',
-  },
-  {
-    id: 3,
-    title: 'Course Registration Issue',
-    category: 'Academic',
-    status: 'Resolved',
-    date: '2024-03-19',
-  },
-  {
-    id: 4,
-    title: 'Course Registration Issue',
-    category: 'Academic',
-    status: 'Resolved',
-    date: '2024-03-19',
-  },
+interface COMPLAINT {
+  id: string
+  userId: string
+  title: string
+  description: string
+  faculty: (typeof facultyEnum.enumValues)[number]
+  category: (typeof complaintCategoryEnum.enumValues)[number]
+  resolutionType: (typeof resolutionTypeEnum.enumValues)[number]
+  status: (typeof complaintStatusEnum.enumValues)[number]
+  priority: (typeof priorityEnum.enumValues)[number]
+  createdAt: Date | string
+}
 
-  // Add more mock data as needed
-]
+export default async function ComplaintsPage() {
+  const result = await getUserComplaints()
 
-export default function ComplaintsPage() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('all')
+  if (!result.success) {
+    if (result.error === 'User not authenticated') {
+      redirect('/login')
+    }
+    return (
+      <div className="container mx-auto space-y-6 py-6">
+        <div className="flex items-center justify-center">
+          <p className="text-red-500">Error: {result.error}</p>
+        </div>
+      </div>
+    )
+  }
 
-  const filteredComplaints = MOCK_COMPLAINTS.filter((complaint) => {
-    const matchesSearch = complaint.title.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = categoryFilter === 'all' || complaint.category === categoryFilter
-    const matchesStatus = statusFilter === 'all' || complaint.status === statusFilter
-    return matchesSearch && matchesCategory && matchesStatus
-  })
+  const complaints = result.data || []
 
   return (
     <div className="container mx-auto space-y-6 py-6">
@@ -68,49 +52,7 @@ export default function ComplaintsPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            {/* Search Filter */}
-            <Input
-              placeholder="Search by title..."
-              value={searchQuery}
-              type="search"
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {/* Category Filter */}
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="Facilities">Facilities</SelectItem>
-                <SelectItem value="Academic">Academic</SelectItem>
-                <SelectItem value="Administrative">Administrative</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="In-review">In Review</SelectItem>
-                <SelectItem value="Resolved">Resolved</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      <TableComponent data={filteredComplaints} />
+      <ComplaintsFilters complaints={complaints} />
     </div>
   )
 }
