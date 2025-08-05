@@ -11,6 +11,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, Controller } from 'react-hook-form'
 import { CldUploadButton } from 'next-cloudinary'
 import { complaintSchema } from '../zod'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { createComplaintWithAttachment } from '@/utils/actions/complaints'
 
 type ComplaintValues = {
   category: string
@@ -21,6 +24,8 @@ type ComplaintValues = {
 }
 
 export function ComplaintForm() {
+  const [fileData, setFileData] = useState<any>(null)
+
   const form = useForm<ComplaintValues>({
     resolver: zodResolver(complaintSchema),
   })
@@ -32,8 +37,76 @@ export function ComplaintForm() {
     formState: { isSubmitting, errors, isValid },
   } = form
 
+  const handleUpload = (result: any) => {
+    // Handle the uploaded file result here
+    setFileData(result?.info)
+  }
+
+  const onSubmit = async (data: ComplaintValues) => {
+    console.log('Form submitted with data:', data)
+    console.log('File data:', fileData)
+
+    const formData = new FormData()
+
+    formData.append('title', data.title)
+    formData.append('description', data.description)
+    formData.append('category', data.category.toLowerCase())
+
+    // Map faculty values to database enum values
+    const facultyMap: Record<string, string> = {
+      Science: 'science',
+      'Management Science': 'management science',
+      Arts: 'art',
+      Law: 'law',
+      Transport: 'transport',
+      Education: 'education',
+      Other: 'other',
+    }
+
+    const dbFaculty = facultyMap[data.faculty] || 'other'
+    formData.append('faculty', dbFaculty)
+
+    // Map the display values to database enum values
+    const resolutionTypeMap: Record<string, string> = {
+      'Immediate Action': 'immediate action',
+      'Investigation Required': 'investigation',
+      'Policy Change': 'policy change',
+      'No Specific Preference': 'other',
+    }
+
+    const dbResolutionType = data.resolutionType ? resolutionTypeMap[data.resolutionType] || 'other' : 'other'
+    formData.append('resolutionType', dbResolutionType)
+
+    // Add file data only if file was uploaded
+    if (fileData && fileData.secure_url) {
+      formData.append('cloudinaryUrl', fileData.secure_url)
+      formData.append('cloudinaryPublicId', fileData.public_id)
+      formData.append('fileSize', fileData.bytes.toString())
+      formData.append('fileType', fileData.resource_type)
+      formData.append('fileName', fileData.original_filename)
+    }
+
+    console.log('Submitting form data...')
+
+    const result = await createComplaintWithAttachment(formData)
+
+    console.log('Submission result:', result)
+
+    if (result.success) {
+      toast.success('Complaint submitted successfully!', {
+        description: 'Your complaint has been submitted and will be reviewed shortly.',
+      })
+      form.reset()
+      setFileData(null)
+    } else {
+      toast.error('Failed to submit complaint', {
+        description: result.error || 'An unexpected error occurred. Please try again later.',
+      })
+    }
+  }
+
   return (
-    <form noValidate onSubmit={handleSubmit(() => {})} className="w-full space-y-4">
+    <form noValidate onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4">
       {/* Category Selection */}
       <div className="flex flex-col gap-2">
         <Label className="font-medium text-gray-700">Category *</Label>
@@ -48,7 +121,7 @@ export function ComplaintForm() {
               </SelectTrigger>
               <SelectContent>
                 {CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>
+                  <SelectItem className="capitalize" key={category} value={category}>
                     {category}
                   </SelectItem>
                 ))}
@@ -111,18 +184,21 @@ export function ComplaintForm() {
       </div>
 
       {/* File Upload */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col gap-2">
         <Label htmlFor="file-upload" className="font-medium text-gray-700">
-          Attachments (Max size: 3MB)
+          Attachments (Optional - Max size: 3MB)
         </Label>
-        <CldUploadButton
-          className="cursor-pointer rounded-3xl bg-[#f1f5f9] p-4 font-bold text-[#24c0b7] transition-colors hover:bg-[#24c0b7] hover:text-white"
-          uploadPreset="your_unsigned_preset"
-          options={{ maxFiles: 5, maxFileSize: 3 * 1024 * 1024 }} // 3MB
-          onUpload={() => {}}
-        >
-          Upload Attachment
-        </CldUploadButton>
+        <div className="flex items-center justify-between gap-2">
+          <CldUploadButton
+            className="cursor-pointer rounded-3xl bg-[#24c0b7] p-3 font-bold text-white transition-colors hover:bg-[#f1f5f9] hover:text-[#24c0b7]"
+            uploadPreset="ml_default"
+            options={{ maxFiles: 5, maxFileSize: 3 * 1024 * 1024 }} // 3MB
+            onUpload={handleUpload}
+          >
+            Upload Attachment
+          </CldUploadButton>
+          {fileData && <span className="text-sm text-green-600">✓ {fileData.original_filename} uploaded</span>}
+        </div>
       </div>
 
       {/* Resolution Type */}
@@ -154,10 +230,10 @@ export function ComplaintForm() {
       {/* Submit Button */}
       <Button
         type="submit"
-        className="transition-color w-full bg-[#24c0b7] py-6 hover:bg-[#f1f5f9] hover:text-black"
+        className="w-full bg-[#24c0b7] py-6 text-white transition-colors hover:bg-[#f1f5f9] hover:text-[#24c0b7]"
         disabled={isSubmitting}
       >
-        <p className="text-lg font-bold">{isSubmitting ? 'Submitting' : 'Submit Complaint'}</p>
+        <p className="text-lg font-bold">{isSubmitting ? 'Submitting...' : 'Submit Complaint'}</p>
       </Button>
     </form>
   )
