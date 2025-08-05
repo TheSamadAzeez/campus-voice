@@ -1,4 +1,12 @@
-const CATEGORIES = ['Academic', 'Faculty Issue', 'Result Delay', 'Harassment', 'Infrastructure', 'Other'] as const
+const CATEGORIES = [
+  'academic',
+  'facility',
+  'administration',
+  'harassment',
+  'infrastructure',
+  'result',
+  'other',
+] as const
 
 const RESOLUTION_TYPES = [
   'Immediate Action',
