@@ -8,8 +8,6 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
   const cloudinaryPublicId = complaintData.get('cloudinaryPublicId') as string
 
   try {
-    console.log('Server action called with FormData')
-
     const title = complaintData.get('title') as string
     const description = complaintData.get('description') as string
     const category = complaintData.get('category') as string
@@ -21,17 +19,6 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
     const fileType = complaintData.get('fileType') as string
     const fileName = complaintData.get('fileName') as string
 
-    console.log('Extracted data:', {
-      title,
-      description,
-      category,
-      faculty,
-      resolutionType,
-      userId,
-      hasFile: !!cloudinaryUrl,
-      fileName,
-    })
-
     const result = await db.transaction(async (tx) => {
       const newComplaintData: NewComplaint = {
         userId,
@@ -42,27 +29,30 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
         resolutionType: resolutionType as any,
       }
 
-      console.log('Inserting complaint with data:', newComplaintData)
-
       const [complaint] = await tx.insert(complaints).values(newComplaintData).returning()
 
       // Insert attachment only if file was uploaded
       if (cloudinaryUrl && cloudinaryPublicId && fileName) {
-        console.log('Inserting attachment for complaint:', complaint.id)
-        await tx.insert(complaintAttachments).values({
+        // Validate required attachment fields
+        if (!fileType) {
+          throw new Error('File type is required for attachment')
+        }
+
+        const attachmentData = {
           complaintId: complaint.id,
           fileName,
           fileType,
           fileSize: fileSize || 0,
           cloudinaryPublicId,
           cloudinaryUrl,
-        })
+        }
+
+        await tx.insert(complaintAttachments).values(attachmentData)
       }
 
       return complaint
     })
 
-    console.log('Transaction completed successfully:', result)
     return { success: true, complaint: result }
   } catch (error) {
     // Clean up uploaded file on error
