@@ -3,7 +3,9 @@
 import { complaintAttachments, complaints, db, NewComplaint } from '@/db/schema'
 import { authUser } from '../helper-functions'
 import crypto from 'crypto'
+import { desc, eq } from 'drizzle-orm'
 
+// Function to create a complaint with an optional attachment
 export async function createComplaintWithAttachment(complaintData: FormData) {
   const cloudinaryPublicId = complaintData.get('cloudinaryPublicId') as string
 
@@ -81,12 +83,41 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
           })
         }
       } catch (cleanupError) {
-        console.error('[Cloudinary Cleanup Error]', cleanupError)
+        console.error('Cloudinary Cleanup Error', cleanupError)
       }
     }
 
     console.error('[Complaint Error]', error)
     return { success: false, error: 'Something went wrong submitting the complaint.' }
+  }
+}
+
+// Fetch complaints for the authenticated user
+export async function getUserComplaints(limit?: number) {
+  try {
+    const userId = await authUser()
+    if (!userId) {
+      return { success: false, error: 'User not authenticated' }
+    }
+    if (limit) {
+      const userComplaints = await db
+        .select()
+        .from(complaints)
+        .where(eq(complaints.userId, userId))
+        .orderBy(desc(complaints.createdAt))
+        .limit(limit)
+      return { success: true, data: userComplaints }
+    } else {
+      const userComplaints = await db
+        .select()
+        .from(complaints)
+        .where(eq(complaints.userId, userId))
+        .orderBy(desc(complaints.createdAt))
+      return { success: true, data: userComplaints }
+    }
+  } catch (error) {
+    console.error('Error fetching user complaints:', error)
+    return { success: false, error: 'Failed to fetch user complaints' }
   }
 }
 
