@@ -1,9 +1,8 @@
-'use client'
-
 import { Activity, AlertCircle, CheckCircle2, Clock, LucideIcon } from 'lucide-react'
 import { ChartAreaGradient } from './components/area-chart'
 import { Statistics } from './components/statistics'
 import { TableComponent } from '../../components/custom/table'
+import { getUserComplaints } from '@/utils/actions/complaints'
 
 // Mock data for demonstration
 
@@ -14,30 +13,6 @@ interface ComplaintStats {
   icon: LucideIcon
   color: string
 }
-
-const RECENT_ACTIVITIES = [
-  {
-    id: 1,
-    title: 'Noise complaint in Library',
-    category: 'Facilities',
-    status: 'pending',
-    date: '2024-03-20',
-  },
-  {
-    id: 2,
-    title: 'Cafeteria cleanliness issue',
-    category: 'Facilities',
-    status: 'resolved',
-    date: '2024-03-19',
-  },
-  {
-    id: 3,
-    title: 'Dormitory maintenance request',
-    category: 'Facilities',
-    status: 'in-review',
-    date: '2024-03-18',
-  },
-]
 
 const COMPLAINT_STATS: ComplaintStats[] = [
   {
@@ -70,7 +45,8 @@ const COMPLAINT_STATS: ComplaintStats[] = [
   },
 ]
 
-export default function StudentPage() {
+export default async function StudentPage() {
+  const { data } = await getUserComplaints(3)
   return (
     <div className="mx-auto w-full space-y-6 p-6">
       <h1 className="mb-6 text-3xl font-bold">Hello, Samad</h1>
@@ -80,7 +56,7 @@ export default function StudentPage() {
         <ChartAreaGradient />
       </div>
       {/* Recent Activities */}
-      <TableComponent data={RECENT_ACTIVITIES} dashboard />
+      <TableComponent data={data || []} dashboard />
     </div>
   )
 }
