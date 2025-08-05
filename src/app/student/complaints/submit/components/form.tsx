@@ -9,17 +9,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { CATEGORIES, FACULTIES, RESOLUTION_TYPES } from '../enums'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, Controller } from 'react-hook-form'
-import { z } from 'zod'
 import { CldUploadButton } from 'next-cloudinary'
-import { ScrollArea } from '@/components/ui/scroll-area'
-
-const complaintSchema = z.object({
-  category: z.string().nonempty('category is required'),
-  faculty: z.string().nonempty('faculty is required'),
-  title: z.string().min(1, 'Title is required').max(100, 'Title must be less than 100 characters'),
-  description: z.string().min(1, 'Description is required'),
-  resolutionType: z.string().optional(),
-})
+import { complaintSchema } from '../zod'
 
 type ComplaintValues = {
   category: string
