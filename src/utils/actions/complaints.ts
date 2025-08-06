@@ -3,7 +3,7 @@
 import { complaintAttachments, complaints, db, NewComplaint } from '@/db/schema'
 import { authUser } from '../helper-functions'
 import crypto from 'crypto'
-import { desc, eq } from 'drizzle-orm'
+import { count, desc, eq } from 'drizzle-orm'
 
 // Function to create a complaint with an optional attachment
 export async function createComplaintWithAttachment(complaintData: FormData) {
@@ -65,6 +65,7 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
         const apiSecret = process.env.CLOUDINARY_API_SECRET
 
         if (cloudName && apiKey && apiSecret) {
+          // Generate signature for Cloudinary API request
           const timestamp = Math.round(new Date().getTime() / 1000)
           const stringToSign = `public_id=${cloudinaryPublicId}&timestamp=${timestamp}${apiSecret}`
           const signature = crypto.createHash('sha1').update(stringToSign).digest('hex')
@@ -118,6 +119,55 @@ export async function getUserComplaints(limit?: number) {
   } catch (error) {
     console.error('Error fetching user complaints:', error)
     return { success: false, error: 'Failed to fetch user complaints' }
+  }
+}
+
+export async function getComplaintStats() {
+  try {
+    const userId = await authUser()
+
+    if (!userId) {
+      return { success: false, error: 'User not authenticated' }
+    }
+
+    // 📦 Ask database to group complaints by their status and count each group
+    const result = await db
+      .select({
+        status: complaints.status, // 👈 select the status column
+        count: count(complaints.id).as('count'), // 👈 count how many in each group
+      })
+      .from(complaints)
+      .where(eq(complaints.userId, userId)) // 👈 only complaints by the logged-in user
+      .groupBy(complaints.status) // 👈 group by status (pending, resolved, etc.)
+
+    // 🎯 Initialize counts
+    const stats = {
+      total: 0,
+      resolved: 0,
+      inReview: 0,
+      pending: 0,
+    }
+
+    // 🔁 Loop through results and update stats
+    for (const row of result) {
+      stats.total += Number(row.count) // add to total
+
+      if (row.status === 'resolved') {
+        stats.resolved = Number(row.count)
+      } else if (row.status === 'in-review') {
+        stats.inReview = Number(row.count)
+      } else if (row.status === 'pending') {
+        stats.pending = Number(row.count)
+      }
+    }
+
+    return {
+      success: true,
+      data: stats,
+    }
+  } catch (error) {
+    console.error('Error fetching complaint stats:', error)
+    return { success: false, error: 'Failed to fetch complaint stats' }
   }
 }
 
