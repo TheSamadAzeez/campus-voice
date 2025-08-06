@@ -15,7 +15,7 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
     const category = complaintData.get('category') as string
     const faculty = complaintData.get('faculty') as string
     const resolutionType = complaintData.get('resolutionType') as string
-    const userId = await authUser() // Get userId from session
+    const { userId } = await authUser() // Get userId from session
     const cloudinaryUrl = complaintData.get('cloudinaryUrl') as string
     const fileSize = complaintData.get('fileSize') ? Number(complaintData.get('fileSize')) : null
     const fileType = complaintData.get('fileType') as string
@@ -96,7 +96,7 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
 // Fetch complaints for the authenticated user
 export async function getUserComplaints(limit?: number) {
   try {
-    const userId = await authUser()
+    const { userId } = await authUser()
     if (!userId) {
       return { success: false, error: 'User not authenticated' }
     }
@@ -124,7 +124,7 @@ export async function getUserComplaints(limit?: number) {
 
 export async function getComplaintStats() {
   try {
-    const userId = await authUser()
+    const { userId } = await authUser()
 
     if (!userId) {
       return { success: false, error: 'User not authenticated' }
@@ -161,13 +161,69 @@ export async function getComplaintStats() {
       }
     }
 
-    return {
-      success: true,
-      data: stats,
-    }
+    return { success: true, data: stats }
   } catch (error) {
     console.error('Error fetching complaint stats:', error)
     return { success: false, error: 'Failed to fetch complaint stats' }
+  }
+}
+
+/** ADMIN  */
+
+export async function getAdminComplaintsStats() {
+  try {
+    const user = await authUser()
+    if (!user || user.role !== 'admin') {
+      return { success: false, error: 'You are not authorized to access this page' }
+    }
+    // 📦 Ask database to group complaints by their status and count each group
+    const result = await db
+      .select({
+        status: complaints.status, // 👈 select the status column
+        count: count(complaints.id).as('count'), // 👈 count how many in each group
+      })
+      .from(complaints)
+      .groupBy(complaints.status) // 👈 group by status (pending, resolved, etc.)
+    // 🎯 Initialize counts
+    const stats = {
+      total: 0,
+      resolved: 0,
+      inReview: 0,
+      pending: 0,
+    }
+    // 🔁 Loop through results and update stats
+    for (const row of result) {
+      stats.total += Number(row.count) // add to total
+      if (row.status === 'resolved') {
+        stats.resolved = Number(row.count)
+      } else if (row.status === 'in-review') {
+        stats.inReview = Number(row.count)
+      } else if (row.status === 'pending') {
+        stats.pending = Number(row.count)
+      }
+    }
+    return { success: true, data: stats }
+  } catch (error) {
+    console.error('Error fetching admin complaint stats:', error)
+    return { success: false, error: 'Failed to fetch admin complaint stats' }
+  }
+}
+
+export async function getAllComplaints(limit?: number) {
+  try {
+    const user = await authUser()
+    if (!user || user.role !== 'admin') {
+      return { success: false, error: 'You are not authorized to access this page' }
+    }
+    if (limit) {
+      const allComplaints = await db.select().from(complaints).orderBy(desc(complaints.createdAt)).limit(limit)
+      return { success: true, data: allComplaints }
+    }
+    const allComplaints = await db.select().from(complaints).orderBy(desc(complaints.createdAt))
+    return { success: true, data: allComplaints }
+  } catch (error) {
+    console.error('Error fetching all complaints:', error)
+    return { success: false, error: 'Failed to fetch all complaints' }
   }
 }
 
