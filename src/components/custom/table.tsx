@@ -54,7 +54,9 @@ export function TableComponent({
             <TableBody>
               {data.map((complaint) => (
                 <TableRow key={complaint.id}>
-                  <TableCell className="capitalize">{complaint.title}</TableCell>
+                  <TableCell className="truncate capitalize">
+                    {complaint.title.length > 50 ? complaint.title.slice(0, 50) + '...' : complaint.title}
+                  </TableCell>
                   <TableCell className="capitalize">{complaint.category}</TableCell>
                   {data[0]?.faculty ? <TableCell className="capitalize">{complaint.faculty}</TableCell> : null}
                   <TableCell>
