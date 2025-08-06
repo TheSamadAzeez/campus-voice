@@ -1,60 +1,38 @@
-'use client'
+import { getAllComplaints } from '@/utils/actions/complaints'
+import { complaintCategoryEnum, complaintStatusEnum, facultyEnum, priorityEnum, resolutionTypeEnum } from '@/db/schema'
+import { redirect } from 'next/navigation'
+import ComplaintsFilters from './components/complaints-filters'
 
-import { TableComponent } from '@/components/custom/table'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useState } from 'react'
+interface COMPLAINT {
+  id: string
+  userId: string
+  title: string
+  description: string
+  faculty: (typeof facultyEnum.enumValues)[number]
+  category: (typeof complaintCategoryEnum.enumValues)[number]
+  resolutionType: (typeof resolutionTypeEnum.enumValues)[number]
+  status: (typeof complaintStatusEnum.enumValues)[number]
+  priority: (typeof priorityEnum.enumValues)[number]
+  createdAt: Date | string
+}
 
-// Mock data - replace with actual data from your backend
-const MOCK_COMPLAINTS = [
-  {
-    id: 1,
-    title: 'Noise in Library',
-    faculty: 'science',
-    category: 'Facilities',
-    status: 'Pending',
-    date: '2024-03-20',
-  },
-  {
-    id: 2,
-    title: 'Course Registration Issue',
-    faculty: 'law',
-    category: 'Academic',
-    status: 'In-review',
-    date: '2024-03-19',
-  },
-  {
-    id: 3,
-    title: 'Course Registration Issue',
-    faculty: 'art',
-    category: 'Academic',
-    status: 'Resolved',
-    date: '2024-03-19',
-  },
-  {
-    id: 4,
-    title: 'Course Registration Issue',
-    faculty: 'education',
-    category: 'Academic',
-    status: 'Resolved',
-    date: '2024-03-19',
-  },
+export default async function AllComplaintsPage() {
+  const result = await getAllComplaints()
 
-  // Add more mock data as needed
-]
+  if (!result.success) {
+    if (result.error === 'You are not authorized to access this page') {
+      redirect('/login')
+    }
+    return (
+      <div className="container mx-auto space-y-6 py-6">
+        <div className="flex items-center justify-center">
+          <p className="text-red-500">Error: {result.error}</p>
+        </div>
+      </div>
+    )
+  }
 
-export default function AllComplaintsPage() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('all')
-
-  const filteredComplaints = MOCK_COMPLAINTS.filter((complaint) => {
-    const matchesSearch = complaint.title.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = categoryFilter === 'all' || complaint.category === categoryFilter
-    const matchesStatus = statusFilter === 'all' || complaint.status === statusFilter
-    return matchesSearch && matchesCategory && matchesStatus
-  })
+  const complaints = result.data || []
 
   return (
     <div className="container mx-auto space-y-6 py-6">
@@ -62,49 +40,7 @@ export default function AllComplaintsPage() {
         <h1 className="text-3xl font-bold">Complaints Management</h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            {/* Search Filter */}
-            <Input
-              placeholder="Search by title..."
-              value={searchQuery}
-              type="search"
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {/* Category Filter */}
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="Facilities">Facilities</SelectItem>
-                <SelectItem value="Academic">Academic</SelectItem>
-                <SelectItem value="Administrative">Administrative</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="In-review">In Review</SelectItem>
-                <SelectItem value="Resolved">Resolved</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      <TableComponent data={filteredComplaints} admin />
+      <ComplaintsFilters complaints={complaints} />
     </div>
   )
 }
