@@ -39,7 +39,7 @@ export async function deleteUser(userId: string) {
 
 export async function getUser() {
   try {
-    const userId = await authUser()
+    const { userId } = await authUser()
     const user = await db.select().from(users).where(eq(users.id, userId))
     return { success: true, user: user[0] }
   } catch (error) {
