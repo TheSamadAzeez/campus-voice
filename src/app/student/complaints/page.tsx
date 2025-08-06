@@ -1,25 +1,9 @@
-import { TableComponent } from '@/components/custom/table'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { getUserComplaints } from '@/utils/actions/complaints'
 import { CirclePlus } from 'lucide-react'
 import Link from 'next/link'
-import { getUserComplaints } from '@/utils/actions/complaints'
-import { complaintCategoryEnum, complaintStatusEnum, facultyEnum, priorityEnum, resolutionTypeEnum } from '@/db/schema'
 import { redirect } from 'next/navigation'
 import ComplaintsFilters from './components/complaints-filters'
-
-interface COMPLAINT {
-  id: string
-  userId: string
-  title: string
-  description: string
-  faculty: (typeof facultyEnum.enumValues)[number]
-  category: (typeof complaintCategoryEnum.enumValues)[number]
-  resolutionType: (typeof resolutionTypeEnum.enumValues)[number]
-  status: (typeof complaintStatusEnum.enumValues)[number]
-  priority: (typeof priorityEnum.enumValues)[number]
-  createdAt: Date | string
-}
 
 export default async function ComplaintsPage() {
   const result = await getUserComplaints()
