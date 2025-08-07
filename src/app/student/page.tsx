@@ -15,7 +15,7 @@ export default async function StudentPage() {
 
   return (
     <div className="mx-auto w-full space-y-6 p-6">
-      <h1 className="mb-6 text-3xl font-bold">Hello, Samad</h1>
+      <h1 className="mb-6 text-3xl font-bold">Hello, {dashboardData?.user?.name} </h1>
       <div className="flex w-full gap-4">
         {/* Complaint Statistics */}
         <Statistics stats={dashboardData?.stats?.data || defaultStats} />
