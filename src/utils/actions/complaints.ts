@@ -5,7 +5,6 @@ import { authUser } from '../helper-functions'
 import crypto from 'crypto'
 import { count, desc, eq } from 'drizzle-orm'
 
-// Function to create a complaint with an optional attachment
 export async function createComplaintWithAttachment(complaintData: FormData) {
   const cloudinaryPublicId = complaintData.get('cloudinaryPublicId') as string
 
@@ -93,7 +92,6 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
   }
 }
 
-// Fetch complaints for the authenticated user
 export async function getUserComplaints(limit?: number) {
   try {
     const { userId } = await authUser()
@@ -168,6 +166,45 @@ export async function getComplaintStats() {
   }
 }
 
+// export async function getComplaintById(complaintId: string) {
+//   try {
+//     const { userId } = await authUser()
+//     if (!userId) {
+//       return { success: false, error: 'User not authenticated' }
+//     }
+//     // Fetch complaint details along with user info
+//     const [complaint] = await db
+//       .select()
+//       .from(complaints)
+//       .leftJoin(complaintAttachments, eq(complaints.id, complaintAttachments.complaintId))
+//       .where(eq(complaints.id, complaintId))
+//     if (!complaint) {
+//       return { success: false, error: 'Complaint not found' }
+//     }
+//     // Fetch attachments
+//     const attachments = await db
+//       .select()
+//       .from(complaintAttachments)
+//       .where(eq(complaintAttachments.complaintId, complaintId))
+//     // Fetch status history
+//     const statusHistory = await db
+//       .select()
+//       .from(complaints.statusHistory)
+//       .leftJoin(users, eq(complaints.statusHistory.changedBy, users.id))
+//       .where(eq(complaints.statusHistory.complaintId, complaintId))
+//       .orderBy(desc(complaints.statusHistory.changedAt))
+//     // Fetch feedback if exists
+//     const [feedback] = await db
+//       .select()
+//       .from(complaints.feedback)
+//       .where(eq(complaints.feedback.complaintId, complaintId))
+//     return {  success: true, data: { ...complaint, attachments, statusHistory, feedback } }
+//   } catch (error) {
+//     console.error('Error fetching complaint by ID:', error)
+//     return { success: false, error: 'Failed to fetch complaint details' }
+//   }
+// }
+
 /** ADMIN  */
 
 export async function getAdminComplaintsStats() {
@@ -227,86 +264,36 @@ export async function getAllComplaints(limit?: number) {
   }
 }
 
-// export async function createComplaint(complaint: NewComplaint) {
-//   try {
-//     const userId = await authUser()
-//     const newComplaint = await db
-//       .insert(complaints)
-//       .values({ ...complaint, userId: userId })
-//       .returning()
-//     return { success: true, data: newComplaint }
-//   } catch (error) {
-//     console.error('Error creating complaint:', error)
-//     return { success: false, error: 'Failed to create complaint' }
-//   }
-// }
+export async function updateStatus(complaintId: string, status: 'pending' | 'in-review' | 'resolved') {
+  try {
+    const user = await authUser()
 
-// export async function getComplaintById(complaintId: string) {
-//   try {
-//     const [complaint] = await db
-//       .select()
-//       .from(complaints)
-//       .leftJoin(users, eq(complaints.userId, users.id))
-//       .where(eq(complaints.id, complaintId))
+    if (!user || user.role !== 'admin') {
+      return { success: false, error: 'You are not authorized for this action' }
+    }
 
-//     if (!complaint) {
-//       return { success: false, error: 'Complaint not found' }
-//     }
+    await db.update(complaints).set({ status: status }).where(eq(complaints.id, complaintId))
 
-//     // Get attachments
-//     const attachments = await db
-//       .select()
-//       .from(complaintAttachments)
-//       .where(eq(complaintAttachments.complaintId, complaintId))
+    return { success: true, message: 'Complaint status updated successfully' }
+  } catch (error) {
+    console.error('Error updating status', error)
+    return { success: false, error: 'Failed to update complaint status' }
+  }
+}
 
-//     // Get status history
-//     const statusHistory = await db
-//       .select()
-//       .from(complaintStatusHistory)
-//       .leftJoin(users, eq(complaintStatusHistory.changedBy, users.id))
-//       .where(eq(complaintStatusHistory.complaintId, complaintId))
-//       .orderBy(desc(complaintStatusHistory.changedAt))
+export async function updatePriority(complaintId: string, priority: 'low' | 'normal' | 'high') {
+  try {
+    const user = await authUser()
 
-//     // Get feedback if exists
-//     const [feedback] = await db.select().from(complaintFeedback).where(eq(complaintFeedback.complaintId, complaintId))
+    if (!user || user.role !== 'admin') {
+      return { success: false, error: 'You are not authorized for this action' }
+    }
 
-//     return {
-//       success: true,
-//       data: {
-//         ...complaint.complaints,
-//         user: complaint.users,
-//         attachments,
-//         statusHistory,
-//         feedback,
-//       },
-//     }
-//   } catch (error) {
-//     console.error('Error fetching complaint:', error)
-//     return { success: false, error: 'Failed to fetch complaint' }
-//   }
-// }
+    await db.update(complaints).set({ priority: priority }).where(eq(complaints.id, complaintId))
 
-// export async function getAllComplaints() {
-//   try {
-//     const user = await getUser()
-//     if (user?.role !== 'admin') {
-//       return 'You are not authorized to access this page'
-//     }
-//     const userComplaints = await db.select().from(complaints)
-//     return userComplaints
-//   } catch (error) {
-//     console.error(error)
-//     return 'Error fetching complaints'
-//   }
-// }
-
-// export async function getUserComplaints() {
-//   try {
-//     const userId = await authUser()
-//     const userComplaints = await db.select().from(complaints).where(eq(complaints.userId, userId))
-//     return userComplaints
-//   } catch (error) {
-//     console.error(error)
-//     return null
-//   }
-// }
+    return { success: true, message: 'Complaint priority updated successfully' }
+  } catch (error) {
+    console.error('Error updating priority', error)
+    return { success: false, error: 'Failed to update complaint priority' }
+  }
+}
