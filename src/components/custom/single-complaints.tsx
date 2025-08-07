@@ -15,6 +15,7 @@ interface Complaint {
   category: string
   faculty: string
   status: string
+  priority: string
   dateSubmitted: string
   description: string
   attachments: string[]
@@ -38,18 +39,29 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <CardTitle className="text-2xl">{complaint.title}</CardTitle>
+                <CardTitle className="text-2xl">
+                  <div className="flex items-center justify-center gap-2">
+                    {complaint.title}
+                    <Badge
+                      variant="outline"
+                      className={`px-3 py-1 text-xs ${getStatusColor(complaint.status.toLowerCase())}`}
+                    >
+                      {complaint.status.toLowerCase()}
+                    </Badge>
+                  </div>
+                </CardTitle>
                 <CardDescription className="flex items-center gap-2">
                   <Clock className="size-4" />
                   Submitted on {complaint.dateSubmitted}
                 </CardDescription>
               </div>
-              <Badge
+
+              <Button
                 variant="outline"
-                className={`px-3 py-1 text-sm ${getStatusColor(complaint.status.toLowerCase())}`}
+                className={`cursor-pointer capitalize ${complaint.status.toLowerCase() === 'pending' ? 'bg-purple-500/50' : complaint.status.toLowerCase() === 'in-review' ? 'bg-green-500/50' : ''}`}
               >
-                {complaint.status.toLowerCase()}
-              </Badge>
+                {isAdmin && complaint.status.toLowerCase() === 'pending' ? 'Mark as In-Review' : 'Resolve complaint'}
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -164,7 +176,7 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
               <CardDescription>Update the status of this complaint</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="flex items-center gap-10">
                 <div className="space-y-2">
                   <Label htmlFor="status">Update Status</Label>
                   <Select defaultValue={complaint.status.toLowerCase()}>
@@ -172,11 +184,23 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending" className="hidden">
-                        Pending
-                      </SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="in-review">In Review</SelectItem>
                       <SelectItem value="resolved">Resolved</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="status">Update Priority</Label>
+                  <Select defaultValue={complaint.priority.toLowerCase()}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
