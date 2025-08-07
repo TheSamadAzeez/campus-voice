@@ -101,7 +101,7 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
         </CardContent>
       </Card>
 
-      <TableComponent data={filteredComplaints} />
+      <TableComponent data={filteredComplaints} admin />
     </>
   )
 }
