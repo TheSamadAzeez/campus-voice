@@ -8,7 +8,7 @@ export function Sidebar({ admin }: { admin?: boolean }) {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-full w-30 flex-col items-center justify-center gap-15 py-2">
+    <div className="flex h-full w-30 flex-col items-center justify-center gap-15 bg-white py-2">
       {admin
         ? adminLinks.map((link) => {
             return (

@@ -1,18 +1,23 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableCell, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { getStatusColor } from '@/utils/status'
+import { getPriorityColor, getStatusColor } from '@/utils/status'
 import { Eye } from 'lucide-react'
 import { ScrollArea } from '../ui/scroll-area'
 import Link from 'next/link'
+import { complaintCategoryEnum, complaintStatusEnum, facultyEnum, priorityEnum, resolutionTypeEnum } from '@/db/schema'
 
-interface Activity {
-  id: number
+interface COMPLAINT {
+  id: string
+  userId: string
   title: string
-  faculty?: string
-  category: string
-  status: string
-  date: string
+  description: string
+  faculty: (typeof facultyEnum.enumValues)[number]
+  category: (typeof complaintCategoryEnum.enumValues)[number]
+  resolutionType: (typeof resolutionTypeEnum.enumValues)[number]
+  status: (typeof complaintStatusEnum.enumValues)[number]
+  priority: (typeof priorityEnum.enumValues)[number]
+  createdAt: Date | string
 }
 
 export function TableComponent({
@@ -20,7 +25,7 @@ export function TableComponent({
   dashboard = false,
   admin = false,
 }: {
-  data: Activity[]
+  data: COMPLAINT[]
   dashboard?: boolean
   admin?: boolean
 }) {
@@ -39,8 +44,9 @@ export function TableComponent({
               <TableRow>
                 <TableHead>Title</TableHead>
                 <TableHead>Category</TableHead>
-                {data[0].faculty ? <TableHead>Faculty</TableHead> : null}
+                {data.length > 0 && data[0].faculty ? <TableHead>Faculty</TableHead> : null}
                 <TableHead>Status</TableHead>
+                <TableHead>Priority</TableHead>
                 <TableHead>Date Submitted</TableHead>
                 <TableHead className="flex justify-center">Actions</TableHead>
               </TableRow>
@@ -48,7 +54,9 @@ export function TableComponent({
             <TableBody>
               {data.map((complaint) => (
                 <TableRow key={complaint.id}>
-                  <TableCell className="capitalize">{complaint.title}</TableCell>
+                  <TableCell className="truncate capitalize">
+                    {complaint.title.length > 50 ? complaint.title.slice(0, 50) + '...' : complaint.title}
+                  </TableCell>
                   <TableCell className="capitalize">{complaint.category}</TableCell>
                   {data[0]?.faculty ? <TableCell className="capitalize">{complaint.faculty}</TableCell> : null}
                   <TableCell>
@@ -56,7 +64,16 @@ export function TableComponent({
                       {complaint.status.toLowerCase()}
                     </Badge>
                   </TableCell>
-                  <TableCell>{complaint.date}</TableCell>
+                  <TableCell>
+                    <Badge variant={'outline'} className={getPriorityColor(complaint.priority.toLowerCase())}>
+                      {complaint.priority.toLowerCase()}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {typeof complaint.createdAt === 'string'
+                      ? complaint.createdAt
+                      : complaint.createdAt.toLocaleDateString()}
+                  </TableCell>
                   <TableCell className="flex justify-center">
                     <Link href={admin ? `/admin/complaints/${complaint.id}` : `/student/complaints/${complaint.id}`}>
                       <Eye className="size-4" color="#f66426" strokeWidth={2} />

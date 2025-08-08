@@ -10,6 +10,7 @@ export default async function AdminComplaintDetailPage({ params }: { params: Pro
     category: 'Facilities',
     faculty: 'Art',
     status: 'Pending',
+    priority: 'normal',
     dateSubmitted: '2024-03-20',
     description: 'There has been excessive noise coming from Room 302 during late hours...',
     attachments: ['noise_recording.mp3', 'photo_evidence.jpg'],
