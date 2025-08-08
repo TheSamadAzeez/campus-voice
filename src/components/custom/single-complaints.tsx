@@ -173,24 +173,10 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
                 <MessageSquare className="size-5" />
                 Admin Actions
               </CardTitle>
-              <CardDescription>Update the status of this complaint</CardDescription>
+              <CardDescription>Update the priority of this complaint</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-10">
-                <div className="space-y-2">
-                  <Label htmlFor="status">Update Status</Label>
-                  <Select defaultValue={complaint.status.toLowerCase()}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in-review">In Review</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="status">Update Priority</Label>
                   <Select defaultValue={complaint.priority.toLowerCase()}>
