@@ -32,6 +32,16 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
 
       const [complaint] = await tx.insert(complaints).values(newComplaintData).returning()
 
+      // Insert initial status history entry
+      await tx.insert(complaintStatusHistory).values({
+        complaintId: complaint.id,
+        changedBy: userId,
+        fieldChanged: 'created',
+        oldValue: null, // No previous value for new complaints
+        newValue: 'pending', // Default status for new complaints
+        notes: 'Complaint created',
+      })
+
       // Insert attachment only if file was uploaded
       if (cloudinaryUrl && cloudinaryPublicId && fileName) {
         // Validate required attachment fields
@@ -272,7 +282,30 @@ export async function updateStatus(complaintId: string, status: 'pending' | 'in-
       return { success: false, error: 'You are not authorized for this action' }
     }
 
-    await db.update(complaints).set({ status: status }).where(eq(complaints.id, complaintId))
+    // Get current complaint to capture old status
+    const [currentComplaint] = await db.select().from(complaints).where(eq(complaints.id, complaintId))
+
+    if (!currentComplaint) {
+      return { success: false, error: 'Complaint not found' }
+    }
+
+    const oldStatus = currentComplaint.status
+
+    // Update status and add status history in a transaction
+    await db.transaction(async (tx) => {
+      // Update the complaint status
+      await tx.update(complaints).set({ status: status }).where(eq(complaints.id, complaintId))
+
+      // Add status history entry
+      await tx.insert(complaintStatusHistory).values({
+        complaintId,
+        changedBy: user.userId,
+        fieldChanged: 'status',
+        oldValue: oldStatus,
+        newValue: status,
+        notes: `Status changed from ${oldStatus} to ${status}`,
+      })
+    })
 
     return { success: true, message: 'Complaint status updated successfully' }
   } catch (error) {
@@ -289,7 +322,30 @@ export async function updatePriority(complaintId: string, priority: 'low' | 'nor
       return { success: false, error: 'You are not authorized for this action' }
     }
 
-    await db.update(complaints).set({ priority: priority }).where(eq(complaints.id, complaintId))
+    // Get current complaint to capture old priority
+    const [currentComplaint] = await db.select().from(complaints).where(eq(complaints.id, complaintId))
+
+    if (!currentComplaint) {
+      return { success: false, error: 'Complaint not found' }
+    }
+
+    const oldPriority = currentComplaint.priority
+
+    // Update priority and add status history in a transaction
+    await db.transaction(async (tx) => {
+      // Update the complaint priority
+      await tx.update(complaints).set({ priority: priority }).where(eq(complaints.id, complaintId))
+
+      // Add status history entry
+      await tx.insert(complaintStatusHistory).values({
+        complaintId,
+        changedBy: user.userId,
+        fieldChanged: 'priority',
+        oldValue: oldPriority,
+        newValue: priority,
+        notes: `Priority changed from ${oldPriority} to ${priority}`,
+      })
+    })
 
     return { success: true, message: 'Complaint priority updated successfully' }
   } catch (error) {
@@ -300,7 +356,7 @@ export async function updatePriority(complaintId: string, priority: 'low' | 'nor
 
 export async function updateStatusHistory(
   complaintId: string,
-  fieldChanged: 'status' | 'priority',
+  fieldChanged: 'status' | 'priority' | 'created',
   oldValue: string,
   newValue: string,
   notes?: string,
