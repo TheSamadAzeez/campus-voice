@@ -35,15 +35,19 @@ export function StatusButton({
     }
   }
 
+  if (!isAdmin) {
+    return null
+  }
+
   return (
     <Button
       variant="outline"
       className={`cursor-pointer capitalize ${complaintData.status.toLowerCase() === 'pending' ? 'bg-purple-500/50' : complaintData.status.toLowerCase() === 'in-review' ? 'bg-green-500/50' : complaintData.status.toLowerCase() === 'resolved' ? 'hidden' : ''}`}
       onClick={handleStatusUpdate}
     >
-      {isAdmin && complaintData.status.toLowerCase() === 'pending'
+      {complaintData.status.toLowerCase() === 'pending'
         ? 'Mark as In-Review'
-        : isAdmin && complaintData.status.toLowerCase() === 'in-review'
+        : complaintData.status.toLowerCase() === 'in-review'
           ? 'Resolve complaint'
           : 'Resolved'}
     </Button>
