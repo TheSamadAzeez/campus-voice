@@ -4,6 +4,7 @@ import { complaintAttachments, complaints, complaintStatusHistory, db, NewCompla
 import { authUser } from '../helper-functions'
 import crypto from 'crypto'
 import { count, desc, eq } from 'drizzle-orm'
+import { revalidatePath } from 'next/cache'
 
 export async function createComplaintWithAttachment(complaintData: FormData) {
   const cloudinaryPublicId = complaintData.get('cloudinaryPublicId') as string
@@ -307,6 +308,12 @@ export async function updateStatus(complaintId: string, status: 'pending' | 'in-
       })
     })
 
+    // Revalidate the complaint detail pages
+    revalidatePath(`/admin/complaints/${complaintId}`)
+    revalidatePath(`/student/complaints/${complaintId}`)
+    revalidatePath('/admin/complaints')
+    revalidatePath('/student/complaints')
+
     return { success: true, message: 'Complaint status updated successfully' }
   } catch (error) {
     console.error('Error updating status', error)
@@ -346,6 +353,12 @@ export async function updatePriority(complaintId: string, priority: 'low' | 'nor
         notes: `Priority changed from ${oldPriority} to ${priority}`,
       })
     })
+
+    // Revalidate the complaint detail pages
+    revalidatePath(`/admin/complaints/${complaintId}`)
+    revalidatePath(`/student/complaints/${complaintId}`)
+    revalidatePath('/admin/complaints')
+    revalidatePath('/student/complaints')
 
     return { success: true, message: 'Complaint priority updated successfully' }
   } catch (error) {
