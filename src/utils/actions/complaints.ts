@@ -391,12 +391,8 @@ export const getComplaintById = async (complaintId: string) => {
       return { success: false, error: 'User not authenticated' }
     }
 
-    // Fetch complaint details along with attachments and status history
-    const [complaint] = await db
-      .select()
-      .from(complaints)
-      .leftJoin(complaintAttachments, eq(complaints.id, complaintAttachments.complaintId)) // Join with attachments
-      .where(eq(complaints.id, complaintId))
+    // Fetch complaint details
+    const [complaint] = await db.select().from(complaints).where(eq(complaints.id, complaintId))
 
     if (!complaint) {
       return { success: false, error: 'Complaint not found' }
@@ -416,7 +412,7 @@ export const getComplaintById = async (complaintId: string) => {
       .where(eq(complaintStatusHistory.complaintId, complaintId))
       .orderBy(desc(complaintStatusHistory.changedAt))
 
-    return { success: true, data: { ...complaint, attachments, statusHistory } }
+    return { success: true, data: { complaints: complaint, attachments, statusHistory } }
   } catch (error) {
     console.error('Error fetching complaint by ID:', error)
     return { success: false, error: 'Failed to fetch complaint details' }

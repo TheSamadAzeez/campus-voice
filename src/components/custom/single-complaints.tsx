@@ -122,25 +122,31 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
           </CardHeader>
           <CardContent>
             <ScrollArea className={statusClassname}>
-              {statusHistory.map((update, index) => (
-                <div key={index} className="flex items-start gap-4">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={cn(
-                        'size-2 rounded-full',
-                        getStatusUpdateColor(update.complaint_status_history.newValue.toLowerCase()),
-                      )}
-                    />
-                    {index !== statusHistory.length - 1 && <div className="bg-border h-12 w-0.5" />}
+              {statusHistory
+                .filter(
+                  (update, index, self) =>
+                    index ===
+                    self.findIndex((u) => u.complaint_status_history.id === update.complaint_status_history.id),
+                )
+                .map((update, index, filteredArray) => (
+                  <div key={update.complaint_status_history.id} className="flex items-start gap-4">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={cn(
+                          'size-2 rounded-full',
+                          getStatusUpdateColor(update.complaint_status_history.newValue.toLowerCase()),
+                        )}
+                      />
+                      {index !== filteredArray.length - 1 && <div className="bg-border h-12 w-0.5" />}
+                    </div>
+                    <div>
+                      <p className="font-medium">Status changed to {update.complaint_status_history.newValue}</p>
+                      <p className="text-muted-foreground text-sm">
+                        {update.complaint_status_history.changedAt.toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">Status changed to {update.complaint_status_history.newValue}</p>
-                    <p className="text-muted-foreground text-sm">
-                      {update.complaint_status_history.changedAt.toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                ))}
             </ScrollArea>
           </CardContent>
         </Card>
