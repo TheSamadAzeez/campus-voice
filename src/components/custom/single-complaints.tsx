@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
-import { getStatusColor, getStatusUpdateColor } from '@/utils/status'
+import { getStatusColor, getStatusUpdateColor, getPriorityStatusUpdateColor } from '@/utils/status'
 import { Clock, FileText, GraduationCap, MessageSquare } from 'lucide-react'
 import { getComplaintById } from '@/utils/actions/complaints'
 import { StatusButton } from './statusButton'
@@ -133,14 +133,20 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
                     <div className="flex flex-col items-center">
                       <div
                         className={cn(
-                          'size-2 rounded-full',
-                          getStatusUpdateColor(update.complaint_status_history.newValue.toLowerCase()),
+                          'mt-2 size-2 rounded-full',
+                          update.complaint_status_history.fieldChanged === 'priority'
+                            ? getPriorityStatusUpdateColor(update.complaint_status_history.newValue.toLowerCase())
+                            : getStatusUpdateColor(update.complaint_status_history.newValue.toLowerCase()),
                         )}
                       />
                       {index !== filteredArray.length - 1 && <div className="bg-border h-12 w-0.5" />}
                     </div>
                     <div>
-                      <p className="font-medium">Status changed to {update.complaint_status_history.newValue}</p>
+                      <p className="font-medium">
+                        {update.complaint_status_history.fieldChanged === 'priority'
+                          ? `Priority changed to ${update.complaint_status_history.newValue}`
+                          : `Status changed to ${update.complaint_status_history.newValue}`}
+                      </p>
                       <p className="text-muted-foreground text-sm">
                         {update.complaint_status_history.changedAt.toLocaleDateString()}
                       </p>
