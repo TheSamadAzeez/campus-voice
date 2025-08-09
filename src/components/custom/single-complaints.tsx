@@ -19,9 +19,9 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
     return <div className="text-center text-red-500">Complaint not found</div>
   }
 
-  const complaintData = complaint.data.complaints
-  const attachments = complaint.data.attachments
-  const statusHistory = complaint.data.statusHistory
+  const complaintData = complaint.data?.complaints
+  const attachments = complaint.data?.attachments
+  const statusHistory = complaint.data?.statusHistory
 
   const statusClassname =
     (complaintData.status.toLowerCase() === 'resolved' && isAdmin) || (complaintData.status != 'resolved' && !isAdmin)
