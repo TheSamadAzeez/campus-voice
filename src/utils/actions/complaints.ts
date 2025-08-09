@@ -1,6 +1,6 @@
 'use server'
 
-import { complaintAttachments, complaints, db, NewComplaint } from '@/db/schema'
+import { complaintAttachments, complaints, complaintStatusHistory, db, NewComplaint, users } from '@/db/schema'
 import { authUser } from '../helper-functions'
 import crypto from 'crypto'
 import { count, desc, eq } from 'drizzle-orm'
@@ -295,5 +295,74 @@ export async function updatePriority(complaintId: string, priority: 'low' | 'nor
   } catch (error) {
     console.error('Error updating priority', error)
     return { success: false, error: 'Failed to update complaint priority' }
+  }
+}
+
+export async function updateStatusHistory(
+  complaintId: string,
+  fieldChanged: 'status' | 'priority',
+  oldValue: string,
+  newValue: string,
+  notes?: string,
+) {
+  try {
+    const user = await authUser()
+
+    if (!user || user.role !== 'admin') {
+      return { success: false, error: 'You are not authorized for this action' }
+    }
+
+    await db.insert(complaintStatusHistory).values({
+      complaintId,
+      changedBy: user.userId,
+      fieldChanged,
+      oldValue,
+      newValue,
+      notes,
+    })
+
+    return { success: true, message: 'Status history updated successfully' }
+  } catch (error) {
+    console.error('Error updating status history', error)
+    return { success: false, error: 'Failed to update status history' }
+  }
+}
+
+export const getComplaintById = async (complaintId: string) => {
+  try {
+    const user = await authUser()
+    if (!user) {
+      return { success: false, error: 'User not authenticated' }
+    }
+
+    // Fetch complaint details along with attachments and status history
+    const [complaint] = await db
+      .select()
+      .from(complaints)
+      .leftJoin(complaintAttachments, eq(complaints.id, complaintAttachments.complaintId)) // Join with attachments
+      .where(eq(complaints.id, complaintId))
+
+    if (!complaint) {
+      return { success: false, error: 'Complaint not found' }
+    }
+
+    // Fetch attachments
+    const attachments = await db
+      .select()
+      .from(complaintAttachments)
+      .where(eq(complaintAttachments.complaintId, complaintId))
+
+    // Fetch status history
+    const statusHistory = await db
+      .select()
+      .from(complaintStatusHistory)
+      .leftJoin(users, eq(complaintStatusHistory.changedBy, user.userId))
+      .where(eq(complaintStatusHistory.complaintId, complaintId))
+      .orderBy(desc(complaintStatusHistory.changedAt))
+
+    return { success: true, data: { ...complaint, attachments, statusHistory } }
+  } catch (error) {
+    console.error('Error fetching complaint by ID:', error)
+    return { success: false, error: 'Failed to fetch complaint details' }
   }
 }
