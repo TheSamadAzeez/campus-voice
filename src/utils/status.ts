@@ -20,7 +20,7 @@ export const getStatusUpdateColor = (status: string) => {
     case 'in-review':
       return 'bg-purple-500'
     default:
-      return 'bg-gray-500' // fallback color
+      return 'bg-gray-500'
   }
 }
 
@@ -46,6 +46,6 @@ export const getPriorityStatusUpdateColor = (priority: string) => {
     case 'high':
       return 'bg-red-500'
     default:
-      return 'bg-gray-500' // fallback color
+      return 'bg-gray-500'
   }
 }
