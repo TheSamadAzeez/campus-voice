@@ -1,14 +1,14 @@
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { getStatusColor, getStatusUpdateColor } from '@/utils/status'
 import { Clock, FileText, GraduationCap, MessageSquare } from 'lucide-react'
 import { getComplaintById } from '@/utils/actions/complaints'
+import { StatusButton } from './statusButton'
+import { FeedbackForm } from './feedback-form'
+import { AdminActions } from './admin-actions'
+import { WithdrawButton } from './withdraw-button'
 
 export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boolean; complaintId: string }) {
   const complaint = await getComplaintById(complaintId)
@@ -58,14 +58,7 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
                 </CardDescription>
               </div>
 
-              <Button
-                variant="outline"
-                className={`cursor-pointer capitalize ${complaintData.status.toLowerCase() === 'pending' ? 'bg-purple-500/50' : complaintData.status.toLowerCase() === 'in-review' ? 'bg-green-500/50' : ''}`}
-              >
-                {isAdmin && complaintData.status.toLowerCase() === 'pending'
-                  ? 'Mark as In-Review'
-                  : 'Resolve complaint'}
-              </Button>
+              <StatusButton complaintData={complaintData} complaintId={complaintId} isAdmin={isAdmin} />
             </div>
           </CardHeader>
           <CardContent>
@@ -153,66 +146,13 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
         </Card>
 
         {/* Feedback Form (if resolved) and if not admin */}
-        {complaintData.status.toLowerCase() === 'resolved' && !isAdmin && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="size-5" />
-                Provide Feedback
-              </CardTitle>
-              <CardDescription>Let us know how we handled your complaint</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="feedback">Your Feedback</Label>
-                  <Textarea
-                    id="feedback"
-                    placeholder="Share your experience with how we handled your complaint..."
-                    className="min-h-[100px]"
-                  />
-                </div>
-                <Button className="w-full bg-[#24c0b7] sm:w-auto">Submit Feedback</Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {complaintData.status.toLowerCase() === 'resolved' && !isAdmin && <FeedbackForm />}
 
         {/* Admin Actions (if admin) and Withdraw Complaint Button (if not admin)  */}
         {isAdmin && complaintData.status.toLowerCase() != 'resolved' ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="size-5" />
-                Admin Actions
-              </CardTitle>
-              <CardDescription>Update the priority of this complaint</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-10">
-                <div className="space-y-2">
-                  <Label htmlFor="status">Update Priority</Label>
-                  <Select defaultValue={complaintData.priority.toLowerCase()}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="normal">Normal</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <AdminActions defaultPriority={complaintData.priority} />
         ) : complaintData.status.toLowerCase() != 'resolved' ? (
-          <div className="flex justify-end">
-            <Button variant="destructive" className="gap-2">
-              <FileText className="size-4" />
-              Withdraw Complaint
-            </Button>
-          </div>
+          <WithdrawButton />
         ) : null}
       </div>
     </ScrollArea>
