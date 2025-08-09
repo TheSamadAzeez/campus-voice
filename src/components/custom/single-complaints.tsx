@@ -8,28 +8,25 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { getStatusColor, getStatusUpdateColor } from '@/utils/status'
 import { Clock, FileText, GraduationCap, MessageSquare } from 'lucide-react'
+import { getComplaintById } from '@/utils/actions/complaints'
 
-interface Complaint {
-  id: string
-  title: string
-  category: string
-  faculty: string
-  status: string
-  priority: string
-  dateSubmitted: string
-  description: string
-  attachments: string[]
-  statusUpdates: {
-    from: string
-    to: string
-    timestamp: string
-  }[]
-  isResolved: boolean
-}
+export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boolean; complaintId: string }) {
+  const complaint = await getComplaintById(complaintId)
 
-export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint; isAdmin?: boolean }) {
+  console.log('Complaint Data:', complaint)
+
+  if (!complaint || !complaint.success || !complaint.data) {
+    return <div className="text-center text-red-500">Complaint not found</div>
+  }
+
+  const complaintData = complaint.data.complaints
+  const attachments = complaint.data.attachments
+  const statusHistory = complaint.data.statusHistory
+
   const statusClassname =
-    (complaint.isResolved && isAdmin) || (!complaint.isResolved && !isAdmin) ? 'space-y-4 h-fit' : 'h-[95px]'
+    (complaintData.status.toLowerCase() === 'resolved' && isAdmin) || (complaintData.status != 'resolved' && !isAdmin)
+      ? 'space-y-4 h-fit'
+      : 'h-[95px]'
 
   return (
     <ScrollArea className="h-[880px] w-full">
@@ -40,27 +37,34 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <CardTitle className="text-2xl">
-                  <div className="flex items-center justify-center gap-2">
-                    {complaint.title}
+                  <div className="flex items-center justify-center gap-2 capitalize">
+                    {complaintData.title}
                     <Badge
                       variant="outline"
-                      className={`px-3 py-1 text-xs ${getStatusColor(complaint.status.toLowerCase())}`}
+                      className={`px-3 py-1 text-xs ${getStatusColor(complaintData.status.toLowerCase() || 'pending')}`}
                     >
-                      {complaint.status.toLowerCase()}
+                      {complaintData.status.toLowerCase()}
                     </Badge>
                   </div>
                 </CardTitle>
                 <CardDescription className="flex items-center gap-2">
                   <Clock className="size-4" />
-                  Submitted on {complaint.dateSubmitted}
+                  Submitted on{' '}
+                  {complaintData.createdAt.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
                 </CardDescription>
               </div>
 
               <Button
                 variant="outline"
-                className={`cursor-pointer capitalize ${complaint.status.toLowerCase() === 'pending' ? 'bg-purple-500/50' : complaint.status.toLowerCase() === 'in-review' ? 'bg-green-500/50' : ''}`}
+                className={`cursor-pointer capitalize ${complaintData.status.toLowerCase() === 'pending' ? 'bg-purple-500/50' : complaintData.status.toLowerCase() === 'in-review' ? 'bg-green-500/50' : ''}`}
               >
-                {isAdmin && complaint.status.toLowerCase() === 'pending' ? 'Mark as In-Review' : 'Resolve complaint'}
+                {isAdmin && complaintData.status.toLowerCase() === 'pending'
+                  ? 'Mark as In-Review'
+                  : 'Resolve complaint'}
               </Button>
             </div>
           </CardHeader>
@@ -72,8 +76,8 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
                     <FileText className="size-4" />
                     Category
                   </h3>
-                  <Badge variant="outline" className="px-3 py-1 text-sm">
-                    {complaint.category}
+                  <Badge variant="outline" className="px-3 py-1 text-sm capitalize">
+                    {complaintData.category}
                   </Badge>
                 </div>
 
@@ -83,7 +87,7 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
                     Faculty
                   </h3>
                   <Badge variant="outline" className="px-3 py-1 text-sm capitalize">
-                    {complaint.faculty}
+                    {complaintData.faculty}
                   </Badge>
                 </div>
               </div>
@@ -92,18 +96,20 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
                   <MessageSquare className="size-4" />
                   Description
                 </h3>
-                <p className="text-muted-foreground bg-muted/50 rounded-lg p-4">{complaint.description}</p>
+                <p className="text-muted-foreground bg-muted/50 rounded-lg p-4 capitalize">
+                  {complaintData.description}
+                </p>
               </div>
-              {complaint.attachments.length > 0 && (
+              {attachments && attachments.length > 0 && (
                 <div>
                   <h3 className="mb-2 flex items-center gap-2 font-semibold">
                     <FileText className="size-4" />
                     Attachments
                   </h3>
                   <div className="flex gap-2">
-                    {complaint.attachments.map((file, index) => (
+                    {attachments.map((file, index) => (
                       <Badge key={index} variant="outline" className="px-3 py-1 text-sm">
-                        {file}
+                        {file.fileName}
                       </Badge>
                     ))}
                   </div>
@@ -123,15 +129,22 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
           </CardHeader>
           <CardContent>
             <ScrollArea className={statusClassname}>
-              {complaint.statusUpdates.map((update, index) => (
+              {statusHistory.map((update, index) => (
                 <div key={index} className="flex items-start gap-4">
                   <div className="flex flex-col items-center">
-                    <div className={cn('size-2 rounded-full', getStatusUpdateColor(update.to.toLowerCase()))} />
-                    {index !== complaint.statusUpdates.length - 1 && <div className="bg-border h-12 w-0.5" />}
+                    <div
+                      className={cn(
+                        'size-2 rounded-full',
+                        getStatusUpdateColor(update.complaint_status_history.newValue.toLowerCase()),
+                      )}
+                    />
+                    {index !== statusHistory.length - 1 && <div className="bg-border h-12 w-0.5" />}
                   </div>
                   <div>
-                    <p className="font-medium">Status changed to {update.to}</p>
-                    <p className="text-muted-foreground text-sm">{update.timestamp}</p>
+                    <p className="font-medium">Status changed to {update.complaint_status_history.newValue}</p>
+                    <p className="text-muted-foreground text-sm">
+                      {update.complaint_status_history.changedAt.toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -140,7 +153,7 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
         </Card>
 
         {/* Feedback Form (if resolved) and if not admin */}
-        {complaint.isResolved && !isAdmin && (
+        {complaintData.status.toLowerCase() === 'resolved' && !isAdmin && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -166,7 +179,7 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
         )}
 
         {/* Admin Actions (if admin) and Withdraw Complaint Button (if not admin)  */}
-        {isAdmin && !complaint.isResolved ? (
+        {isAdmin && complaintData.status.toLowerCase() != 'resolved' ? (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -179,7 +192,7 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
               <div className="flex items-center gap-10">
                 <div className="space-y-2">
                   <Label htmlFor="status">Update Priority</Label>
-                  <Select defaultValue={complaint.priority.toLowerCase()}>
+                  <Select defaultValue={complaintData.priority.toLowerCase()}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
@@ -193,7 +206,7 @@ export function SingleComplaints({ complaint, isAdmin }: { complaint: Complaint;
               </div>
             </CardContent>
           </Card>
-        ) : !complaint.isResolved ? (
+        ) : complaintData.status.toLowerCase() != 'resolved' ? (
           <div className="flex justify-end">
             <Button variant="destructive" className="gap-2">
               <FileText className="size-4" />
