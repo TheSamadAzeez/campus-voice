@@ -9,11 +9,12 @@ import { StatusButton } from './statusButton'
 import { FeedbackForm } from './feedback-form'
 import { AdminActions } from './admin-actions'
 import { WithdrawButton } from './withdraw-button'
+import MediaDisplay from './media-display'
 
 export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boolean; complaintId: string }) {
   const complaint = await getComplaintById(complaintId)
 
-  console.log('Complaint Data:', complaint)
+  console.log('Attachments:', complaint.data?.attachments)
 
   if (!complaint || !complaint.success || !complaint.data) {
     return <div className="text-center text-red-500">Complaint not found</div>
@@ -99,11 +100,15 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
                     <FileText className="size-4" />
                     Attachments
                   </h3>
-                  <div className="flex gap-2">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {attachments.map((file, index) => (
-                      <Badge key={index} variant="outline" className="px-3 py-1 text-sm">
-                        {file.fileName}
-                      </Badge>
+                      <MediaDisplay
+                        key={index}
+                        type={file.fileType}
+                        src={file.cloudinaryUrl}
+                        alt={`Attachment ${index + 1}`}
+                        fileName={file.fileName}
+                      />
                     ))}
                   </div>
                 </div>
