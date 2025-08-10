@@ -14,8 +14,6 @@ import MediaDisplay from './media-display'
 export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boolean; complaintId: string }) {
   const complaint = await getComplaintById(complaintId)
 
-  console.log('Attachments:', complaint.data?.attachments)
-
   if (!complaint || !complaint.success || !complaint.data) {
     return <div className="text-center text-red-500">Complaint not found</div>
   }
@@ -100,7 +98,7 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
                     <FileText className="size-4" />
                     Attachments
                   </h3>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="flex items-center gap-4">
                     {attachments.map((file, index) => (
                       <MediaDisplay
                         key={index}
