@@ -7,7 +7,8 @@ import { count, desc, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
 export async function createComplaintWithAttachment(complaintData: FormData) {
-  const cloudinaryPublicId = complaintData.get('cloudinaryPublicId') as string
+  const fileCount = Number(complaintData.get('fileCount')) || 0
+  const cloudinaryPublicIds: string[] = []
 
   try {
     const title = complaintData.get('title') as string
@@ -16,10 +17,33 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
     const faculty = complaintData.get('faculty') as string
     const resolutionType = complaintData.get('resolutionType') as string
     const { userId } = await authUser() // Get userId from session
-    const cloudinaryUrl = complaintData.get('cloudinaryUrl') as string
-    const fileSize = complaintData.get('fileSize') ? Number(complaintData.get('fileSize')) : null
-    const fileType = complaintData.get('fileType') as string
-    const fileName = complaintData.get('fileName') as string
+
+    // Collect all file data
+    const fileDataArray: Array<{
+      cloudinaryUrl: string
+      cloudinaryPublicId: string
+      fileSize: number | null
+      fileType: string
+      fileName: string
+    }> = []
+    for (let i = 0; i < fileCount; i++) {
+      const cloudinaryUrl = complaintData.get(`cloudinaryUrl_${i}`) as string
+      const cloudinaryPublicId = complaintData.get(`cloudinaryPublicId_${i}`) as string
+      const fileSize = complaintData.get(`fileSize_${i}`) ? Number(complaintData.get(`fileSize_${i}`)) : null
+      const fileType = complaintData.get(`fileType_${i}`) as string
+      const fileName = complaintData.get(`fileName_${i}`) as string
+
+      if (cloudinaryUrl && cloudinaryUrl !== '') {
+        fileDataArray.push({
+          cloudinaryUrl,
+          cloudinaryPublicId,
+          fileSize,
+          fileType,
+          fileName,
+        })
+        cloudinaryPublicIds.push(cloudinaryPublicId)
+      }
+    }
 
     const result = await db.transaction(async (tx) => {
       const newComplaintData: NewComplaint = {
@@ -43,20 +67,24 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
         notes: 'Complaint created',
       })
 
-      // Insert attachment only if file was uploaded
-      if (cloudinaryUrl && cloudinaryPublicId && fileName) {
-        // Validate required attachment fields
-        if (!fileType) {
-          throw new Error('File type is required for attachment')
-        }
+      // Insert attachments for all uploaded files
+      for (const fileData of fileDataArray) {
+        // Use fallback values for missing fields
+        const safeFileName =
+          fileData.fileName && fileData.fileName.trim() !== '' ? fileData.fileName.trim() : 'unknown_file'
+        const safeFileType = fileData.fileType && fileData.fileType.trim() !== '' ? fileData.fileType.trim() : 'unknown'
+        const safePublicId =
+          fileData.cloudinaryPublicId && fileData.cloudinaryPublicId.trim() !== ''
+            ? fileData.cloudinaryPublicId.trim()
+            : 'unknown_id'
 
         const attachmentData = {
           complaintId: complaint.id,
-          fileName,
-          fileType,
-          fileSize: fileSize || 0,
-          cloudinaryPublicId,
-          cloudinaryUrl,
+          fileName: safeFileName,
+          fileType: safeFileType,
+          fileSize: fileData.fileSize || 0,
+          cloudinaryPublicId: safePublicId,
+          cloudinaryUrl: fileData.cloudinaryUrl.trim(),
         }
 
         await tx.insert(complaintAttachments).values(attachmentData)
@@ -67,34 +95,36 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
 
     return { success: true, complaint: result }
   } catch (error) {
-    // Clean up uploaded file on error
-    if (cloudinaryPublicId) {
-      try {
-        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-        const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY
-        const apiSecret = process.env.CLOUDINARY_API_SECRET
+    // Clean up uploaded files on error
+    for (const cloudinaryPublicId of cloudinaryPublicIds) {
+      if (cloudinaryPublicId) {
+        try {
+          const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+          const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY
+          const apiSecret = process.env.CLOUDINARY_API_SECRET
 
-        if (cloudName && apiKey && apiSecret) {
-          // Generate signature for Cloudinary API request
-          const timestamp = Math.round(new Date().getTime() / 1000)
-          const stringToSign = `public_id=${cloudinaryPublicId}&timestamp=${timestamp}${apiSecret}`
-          const signature = crypto.createHash('sha1').update(stringToSign).digest('hex')
+          if (cloudName && apiKey && apiSecret) {
+            // Generate signature for Cloudinary API request
+            const timestamp = Math.round(new Date().getTime() / 1000)
+            const stringToSign = `public_id=${cloudinaryPublicId}&timestamp=${timestamp}${apiSecret}`
+            const signature = crypto.createHash('sha1').update(stringToSign).digest('hex')
 
-          await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-              public_id: cloudinaryPublicId,
-              api_key: apiKey,
-              timestamp: timestamp.toString(),
-              signature: signature,
-            }),
-          })
+            await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: new URLSearchParams({
+                public_id: cloudinaryPublicId,
+                api_key: apiKey,
+                timestamp: timestamp.toString(),
+                signature: signature,
+              }),
+            })
+          }
+        } catch (cleanupError) {
+          console.error('Cloudinary Cleanup Error', cleanupError)
         }
-      } catch (cleanupError) {
-        console.error('Cloudinary Cleanup Error', cleanupError)
       }
     }
 
