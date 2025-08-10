@@ -329,7 +329,7 @@ export function ComplaintForm() {
           control={control}
           render={({ field }) => (
             <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger id="resolutionType" className="w-full">
+              <SelectTrigger id="resolutionType" className="hidden w-full">
                 <SelectValue placeholder="Select a resolution type" />
               </SelectTrigger>
               <SelectContent>
