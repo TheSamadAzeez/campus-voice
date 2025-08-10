@@ -321,7 +321,7 @@ export function ComplaintForm() {
       </div>
 
       {/* Resolution Type */}
-      <div className="flex flex-col gap-2">
+      <div className="hidden flex-col gap-2 lg:flex">
         <Label className="font-medium text-gray-700">Expected Resolution Type (Optional)</Label>
 
         <Controller
@@ -329,7 +329,7 @@ export function ComplaintForm() {
           control={control}
           render={({ field }) => (
             <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger id="resolutionType" className="hidden w-full">
+              <SelectTrigger id="resolutionType" className="w-full">
                 <SelectValue placeholder="Select a resolution type" />
               </SelectTrigger>
               <SelectContent>
