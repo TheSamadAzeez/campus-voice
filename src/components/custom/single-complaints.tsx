@@ -22,6 +22,8 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
   const attachments = complaint.data?.attachments
   const statusHistory = complaint.data?.statusHistory
 
+  console.log(attachments, 'attachments')
+
   const statusClassname =
     (complaintData.status.toLowerCase() === 'resolved' && isAdmin) || (complaintData.status != 'resolved' && !isAdmin)
       ? 'space-y-4 h-fit'
@@ -57,7 +59,11 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
                 </CardDescription>
               </div>
 
-              <StatusButton complaintData={complaintData} complaintId={complaintId} isAdmin={isAdmin} />
+              {isAdmin ? (
+                <StatusButton complaintData={complaintData} complaintId={complaintId} isAdmin={isAdmin} />
+              ) : (
+                <WithdrawButton />
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -166,8 +172,6 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
         {/* Admin Actions (if admin) and Withdraw Complaint Button (if not admin)  */}
         {isAdmin && complaintData.status.toLowerCase() != 'resolved' ? (
           <AdminActions defaultPriority={complaintData.priority} complaintId={complaintId} />
-        ) : complaintData.status.toLowerCase() != 'resolved' ? (
-          <WithdrawButton />
         ) : null}
       </div>
     </ScrollArea>
