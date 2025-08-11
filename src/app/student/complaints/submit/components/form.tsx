@@ -321,7 +321,7 @@ export function ComplaintForm() {
       </div>
 
       {/* Resolution Type */}
-      <div className="hidden flex-col gap-2 lg:flex">
+      <div className="hidden flex-col gap-2">
         <Label className="font-medium text-gray-700">Expected Resolution Type (Optional)</Label>
 
         <Controller
