@@ -82,12 +82,14 @@ export function ComplaintForm() {
       deleteFromCloudinary(publicId)
         .then((success) => {
           if (!success) {
-            toast.error('Failed to delete file from cloud storage, but file was removed from form')
+            // Only show error if it's a real failure, not just "file not found"
+            console.warn('Failed to delete file from cloud storage, but file was removed from form')
           }
         })
         .catch((error) => {
           console.error('Error deleting from Cloudinary:', error)
-          toast.error('Failed to delete file from cloud storage, but file was removed from form')
+          // Reduced error visibility since the file was already removed from the form
+          console.warn('Failed to delete file from cloud storage, but file was removed from form')
         })
     }
   }
