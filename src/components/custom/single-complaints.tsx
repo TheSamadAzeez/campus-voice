@@ -61,9 +61,9 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
 
               {isAdmin ? (
                 <StatusButton complaintData={complaintData} complaintId={complaintId} isAdmin={isAdmin} />
-              ) : (
-                <WithdrawButton />
-              )}
+              ) : complaint.data?.complaints?.status === 'pending' ? (
+                <WithdrawButton complaintId={complaintId} />
+              ) : null}
             </div>
           </CardHeader>
           <CardContent>
