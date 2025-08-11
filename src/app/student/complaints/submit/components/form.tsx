@@ -11,10 +11,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, Controller } from 'react-hook-form'
 import { CldUploadButton } from 'next-cloudinary'
 import { complaintSchema } from '../zod'
-import { useState } from 'react'
+import { useState, useOptimistic } from 'react'
 import { toast } from 'sonner'
 import { createComplaintWithAttachment } from '@/utils/actions/complaints'
-import MediaDisplay from '@/components/custom/media-display'
+import { deleteFromCloudinary } from '@/utils/helper-functions'
 
 type ComplaintValues = {
   category: string
@@ -26,6 +26,15 @@ type ComplaintValues = {
 
 export function ComplaintForm() {
   const [fileData, setFileData] = useState<any[]>([])
+  const [optimisticFileData, updateOptimisticFileData] = useOptimistic(
+    fileData,
+    (state, action: { type: 'remove'; index: number }) => {
+      if (action.type === 'remove') {
+        return state.filter((_, i) => i !== action.index)
+      }
+      return state
+    },
+  )
 
   const form = useForm<ComplaintValues>({
     resolver: zodResolver(complaintSchema),
@@ -44,7 +53,7 @@ export function ComplaintForm() {
     if (fileInfo) {
       console.log('✅ File uploaded successfully:', fileInfo.original_filename)
 
-      if (fileData.length >= 3) {
+      if (optimisticFileData.length >= 3) {
         toast.error('Maximum 3 files allowed')
         return
       }
@@ -57,8 +66,30 @@ export function ComplaintForm() {
   }
 
   const removeFile = (index: number) => {
-    setFileData((prev) => prev.filter((_, i) => i !== index))
+    const fileToRemove = optimisticFileData[index]
+
+    // Optimistic update: Remove from UI immediately
+    updateOptimisticFileData({ type: 'remove', index })
     toast.success('File removed successfully')
+
+    // Update the actual state immediately for the form submission
+    setFileData((prev) => prev.filter((_, i) => i !== index))
+
+    // Delete from Cloudinary in the background
+    if (fileToRemove?.public_id || fileToRemove?.publicId) {
+      const publicId = fileToRemove.public_id || fileToRemove.publicId
+
+      deleteFromCloudinary(publicId)
+        .then((success) => {
+          if (!success) {
+            toast.error('Failed to delete file from cloud storage, but file was removed from form')
+          }
+        })
+        .catch((error) => {
+          console.error('Error deleting from Cloudinary:', error)
+          toast.error('Failed to delete file from cloud storage, but file was removed from form')
+        })
+    }
   }
 
   const getFileTypeIcon = (resourceType: string, format: string) => {
@@ -219,7 +250,7 @@ export function ComplaintForm() {
           Attachments (Optional - Max 3 files, 3MB each)
         </Label>
         <div className="space-y-3">
-          {fileData.length < 3 && (
+          {optimisticFileData.length < 3 && (
             <CldUploadButton
               className="cursor-pointer rounded-3xl bg-[#24c0b7] p-3 font-bold text-white transition-colors hover:bg-[#f1f5f9] hover:text-[#24c0b7] disabled:cursor-not-allowed disabled:opacity-50"
               uploadPreset="ml_default"
@@ -265,16 +296,16 @@ export function ComplaintForm() {
                 console.log('📤 Upload PROGRESS callback triggered:', result)
               }}
             >
-              {fileData.length === 0 ? 'Upload Attachment' : 'Upload Another File'}
+              {optimisticFileData.length === 0 ? 'Upload Attachment' : 'Upload Another File'}
             </CldUploadButton>
           )}
 
           {/* Display uploaded files info */}
-          {fileData.length > 0 && (
+          {optimisticFileData.length > 0 && (
             <div className="space-y-3">
               <p className="text-sm font-medium text-gray-700">Uploaded files:</p>
               <div className="flex flex-wrap gap-3">
-                {fileData.map((file, index) => (
+                {optimisticFileData.map((file, index) => (
                   <div key={index} className="flex flex-1 items-center justify-between">
                     {/* File info and remove button */}
                     <div className="flex flex-1 items-center justify-between rounded-lg border border-gray-200 p-3">
@@ -308,13 +339,13 @@ export function ComplaintForm() {
             </div>
           )}
 
-          {fileData.length === 0 && (
+          {optimisticFileData.length === 0 && (
             <p className="text-sm text-gray-500">
               No files uploaded yet. Supported formats: Images, Videos, Audio, and PDF files.
             </p>
           )}
 
-          {fileData.length >= 3 && (
+          {optimisticFileData.length >= 3 && (
             <p className="text-sm text-amber-600">Maximum of 3 files reached. Remove a file to upload another.</p>
           )}
         </div>
