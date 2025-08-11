@@ -3,7 +3,7 @@
 import { complaintAttachments, complaints, complaintStatusHistory, db, NewComplaint, users } from '@/db/schema'
 import { authUser } from '../helper-functions'
 import crypto from 'crypto'
-import { count, desc, eq } from 'drizzle-orm'
+import { and, count, desc, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
 export async function createComplaintWithAttachment(complaintData: FormData) {
@@ -207,44 +207,22 @@ export async function getComplaintStats() {
   }
 }
 
-// export async function getComplaintById(complaintId: string) {
-//   try {
-//     const { userId } = await authUser()
-//     if (!userId) {
-//       return { success: false, error: 'User not authenticated' }
-//     }
-//     // Fetch complaint details along with user info
-//     const [complaint] = await db
-//       .select()
-//       .from(complaints)
-//       .leftJoin(complaintAttachments, eq(complaints.id, complaintAttachments.complaintId))
-//       .where(eq(complaints.id, complaintId))
-//     if (!complaint) {
-//       return { success: false, error: 'Complaint not found' }
-//     }
-//     // Fetch attachments
-//     const attachments = await db
-//       .select()
-//       .from(complaintAttachments)
-//       .where(eq(complaintAttachments.complaintId, complaintId))
-//     // Fetch status history
-//     const statusHistory = await db
-//       .select()
-//       .from(complaints.statusHistory)
-//       .leftJoin(users, eq(complaints.statusHistory.changedBy, users.id))
-//       .where(eq(complaints.statusHistory.complaintId, complaintId))
-//       .orderBy(desc(complaints.statusHistory.changedAt))
-//     // Fetch feedback if exists
-//     const [feedback] = await db
-//       .select()
-//       .from(complaints.feedback)
-//       .where(eq(complaints.feedback.complaintId, complaintId))
-//     return {  success: true, data: { ...complaint, attachments, statusHistory, feedback } }
-//   } catch (error) {
-//     console.error('Error fetching complaint by ID:', error)
-//     return { success: false, error: 'Failed to fetch complaint details' }
-//   }
-// }
+export async function withdrawComplaint(complaintId: string) {
+  try {
+    const { userId } = await authUser()
+    if (!userId) {
+      return { success: false, error: 'User not authenticated' }
+    }
+    await db.delete(complaints).where(and(eq(complaints.id, complaintId), eq(complaints.userId, userId)))
+
+    revalidatePath('/student/complaints')
+
+    return { success: true, message: 'Complaint withdrawn successfully' }
+  } catch (error) {
+    console.error('Error withdrawing complaint:', error)
+    return { success: false, error: 'Failed to withdraw complaint' }
+  }
+}
 
 /** ADMIN  */
 
