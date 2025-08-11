@@ -1,8 +1,7 @@
 'use server'
 
 import { complaintAttachments, complaints, complaintStatusHistory, db, NewComplaint, users } from '@/db/schema'
-import { authUser } from '../helper-functions'
-import crypto from 'crypto'
+import { authUser, deleteFromCloudinary } from '../helper-functions'
 import { and, count, desc, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
@@ -98,33 +97,7 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
     // Clean up uploaded files on error
     for (const cloudinaryPublicId of cloudinaryPublicIds) {
       if (cloudinaryPublicId) {
-        try {
-          const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-          const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY
-          const apiSecret = process.env.CLOUDINARY_API_SECRET
-
-          if (cloudName && apiKey && apiSecret) {
-            // Generate signature for Cloudinary API request
-            const timestamp = Math.round(new Date().getTime() / 1000)
-            const stringToSign = `public_id=${cloudinaryPublicId}&timestamp=${timestamp}${apiSecret}`
-            const signature = crypto.createHash('sha1').update(stringToSign).digest('hex')
-
-            await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-              body: new URLSearchParams({
-                public_id: cloudinaryPublicId,
-                api_key: apiKey,
-                timestamp: timestamp.toString(),
-                signature: signature,
-              }),
-            })
-          }
-        } catch (cleanupError) {
-          console.error('Cloudinary Cleanup Error', cleanupError)
-        }
+        await deleteFromCloudinary(cloudinaryPublicId)
       }
     }
 
@@ -213,6 +186,23 @@ export async function withdrawComplaint(complaintId: string) {
     if (!userId) {
       return { success: false, error: 'User not authenticated' }
     }
+
+    // First, fetch all attachments for this complaint to get Cloudinary public IDs
+    const attachments = await db
+      .select({
+        cloudinaryPublicId: complaintAttachments.cloudinaryPublicId,
+      })
+      .from(complaintAttachments)
+      .where(eq(complaintAttachments.complaintId, complaintId))
+
+    // Delete files from Cloudinary
+    for (const attachment of attachments) {
+      if (attachment.cloudinaryPublicId) {
+        await deleteFromCloudinary(attachment.cloudinaryPublicId)
+      }
+    }
+
+    // Delete the complaint (attachments will be cascade deleted due to foreign key constraint)
     await db.delete(complaints).where(and(eq(complaints.id, complaintId), eq(complaints.userId, userId)))
 
     revalidatePath('/student/complaints')
