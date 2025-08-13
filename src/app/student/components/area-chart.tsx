@@ -4,14 +4,12 @@ import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 
-const chartData = [
-  { month: 'January', pending: 186, in_review: 80, resolved: 70 },
-  { month: 'February', pending: 305, in_review: 200, resolved: 400 },
-  { month: 'March', pending: 237, in_review: 120, resolved: 0 },
-  { month: 'April', pending: 73, in_review: 190, resolved: 780 },
-  { month: 'May', pending: 209, in_review: 130, resolved: 70 },
-  { month: 'June', pending: 214, in_review: 140, resolved: 10 },
-]
+interface DataProps {
+  month: string
+  pending: number
+  in_review: number
+  resolved: number
+}
 
 const chartConfig = {
   pending: {
@@ -28,7 +26,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartAreaGradient() {
+export function ChartAreaGradient({ data }: { data?: DataProps[] }) {
   return (
     <Card className="w-1/2">
       <CardHeader>
@@ -38,7 +36,7 @@ export function ChartAreaGradient() {
         <ChartContainer config={chartConfig}>
           <AreaChart
             accessibilityLayer
-            data={chartData}
+            data={data}
             margin={{
               left: 12,
               right: 12,
@@ -68,6 +66,14 @@ export function ChartAreaGradient() {
               </linearGradient>
             </defs>
             <Area
+              dataKey="resolved"
+              type="natural"
+              fill="url(#fillResolved)"
+              fillOpacity={0.4}
+              stroke="#0202ff"
+              stackId="a"
+            />
+            <Area
               dataKey="in_review"
               type="natural"
               fill="url(#fillInReview)"
@@ -81,14 +87,6 @@ export function ChartAreaGradient() {
               fill="url(#fillPending)"
               fillOpacity={0.4}
               stroke="var(--color-pending)"
-              stackId="a"
-            />
-            <Area
-              dataKey="resolved"
-              type="natural"
-              fill="url(#fillResolved)"
-              fillOpacity={0.4}
-              stroke="#0202ff"
               stackId="a"
             />
           </AreaChart>
