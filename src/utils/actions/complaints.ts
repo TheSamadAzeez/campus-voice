@@ -472,6 +472,71 @@ export async function updateStatusHistory(
   }
 }
 
+export async function getAllComplaintChartData() {
+  try {
+    const user = await authUser()
+    if (!user || user.role !== 'admin') {
+      return { success: false, error: 'You are not authorized to access this page' }
+    }
+
+    // Fetch complaint counts grouped by date and status
+    const result = await db
+      .select({
+        date: complaints.createdAt,
+        status: complaints.status,
+        count: count(complaints.id).as('count'),
+      })
+      .from(complaints)
+      .groupBy(complaints.createdAt, complaints.status)
+      .orderBy(complaints.createdAt)
+
+    // 🎯 Initialize chart data structure
+    const chartData: { date: string; pending: number; in_review: number; resolved: number }[] = []
+
+    // 🔁 Loop through results and build chart data
+    for (const row of result) {
+      const date = new Date(row.date).toISOString().split('T')[0] // Format as YYYY-MM-DD
+      const existingDateData = chartData.find((data) => data.date === date)
+      if (existingDateData) {
+        // Update existing date data
+        if (row.status === 'pending') {
+          existingDateData.pending += Number(row.count)
+        } else if (row.status === 'in-review') {
+          existingDateData.in_review += Number(row.count)
+        } else if (row.status === 'resolved') {
+          existingDateData.resolved += Number(row.count)
+        }
+      } else {
+        // Create new date data entry
+        chartData.push({
+          date,
+          pending: row.status === 'pending' ? Number(row.count) : 0,
+          in_review: row.status === 'in-review' ? Number(row.count) : 0,
+          resolved: row.status === 'resolved' ? Number(row.count) : 0,
+        })
+      }
+    }
+
+    // Get the last 3 months date range
+    const currentDate = new Date()
+    const threeMonthsAgo = new Date(currentDate.getFullYear(), currentDate.getMonth() - 3, 1)
+
+    // Filter to only include last 3 months
+    const filteredChartData = chartData.filter((data) => {
+      const dataDate = new Date(data.date)
+      return dataDate >= threeMonthsAgo
+    })
+
+    // Sort by date
+    filteredChartData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+    return { success: true, data: filteredChartData }
+  } catch (error) {
+    console.error('Error fetching all complaint chart data:', error)
+    return { success: false, error: 'Failed to fetch all complaint chart data' }
+  }
+}
+
 export const getComplaintById = async (complaintId: string) => {
   try {
     const user = await authUser()
