@@ -214,6 +214,83 @@ export async function withdrawComplaint(complaintId: string) {
   }
 }
 
+export async function getComplaintChartData() {
+  try {
+    const { userId } = await authUser()
+    if (!userId) {
+      return { success: false, error: 'User not authenticated' }
+    }
+    // Fetch complaint counts grouped by month and status
+    const result = await db
+      .select({
+        month: complaints.createdAt,
+        status: complaints.status,
+        count: count(complaints.id).as('count'),
+      })
+      .from(complaints)
+      .where(eq(complaints.userId, userId))
+      .groupBy(complaints.createdAt, complaints.status)
+      .orderBy(complaints.createdAt)
+    // 🎯 Initialize chart data structure
+    const chartData: { month: string; pending: number; in_review: number; resolved: number }[] = []
+    // 🔁 Loop through results and build chart data
+    for (const row of result) {
+      const month = new Date(row.month).toLocaleString('default', { month: 'long' })
+      const existingMonthData = chartData.find((data) => data.month === month)
+      if (existingMonthData) {
+        // Update existing month data
+        if (row.status === 'pending') {
+          existingMonthData.pending += Number(row.count)
+        } else if (row.status === 'in-review') {
+          existingMonthData.in_review += Number(row.count)
+        } else if (row.status === 'resolved') {
+          existingMonthData.resolved += Number(row.count)
+        }
+      } else {
+        // Create new month data entry
+        chartData.push({
+          month,
+          pending: row.status === 'pending' ? Number(row.count) : 0,
+          in_review: row.status === 'in-review' ? Number(row.count) : 0,
+          resolved: row.status === 'resolved' ? Number(row.count) : 0,
+        })
+      }
+    }
+
+    // Get the last 6 months
+    const currentDate = new Date()
+    const last6Months: string[] = []
+
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
+      const monthName = date.toLocaleString('default', { month: 'long' })
+      last6Months.push(monthName)
+    }
+
+    // Fill in missing months with zero counts (only for last 6 months)
+    for (const month of last6Months) {
+      if (!chartData.find((data) => data.month === month)) {
+        chartData.push({
+          month,
+          pending: 0,
+          in_review: 0,
+          resolved: 0,
+        })
+      }
+    }
+
+    // Filter to only include last 6 months and sort by month order
+    const filteredChartData = chartData
+      .filter((data) => last6Months.includes(data.month))
+      .sort((a, b) => last6Months.indexOf(a.month) - last6Months.indexOf(b.month))
+
+    return { success: true, data: filteredChartData }
+  } catch (error) {
+    console.error('Error fetching complaint chart data:', error)
+    return { success: false, error: 'Failed to fetch complaint chart data' }
+  }
+}
+
 /** ADMIN  */
 
 export async function getAdminComplaintsStats() {
