@@ -169,7 +169,7 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
         {complaintData.status.toLowerCase() === 'resolved' && !isAdmin && <FeedbackForm />}
 
         {/* Admin Actions (if admin) and Withdraw Complaint Button (if not admin)  */}
-        {isAdmin && complaintData.status.toLowerCase() != 'resolved' ? (
+        {isAdmin && complaintData.status.toLowerCase() !== 'resolved' ? (
           <AdminActions defaultPriority={complaintData.priority} complaintId={complaintId} />
         ) : null}
       </div>
