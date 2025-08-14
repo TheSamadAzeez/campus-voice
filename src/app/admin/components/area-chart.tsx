@@ -17,110 +17,114 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 export const description = 'An interactive area chart'
 
 const chartData = [
-  { date: '2024-04-01', desktop: 222, mobile: 150 },
-  { date: '2024-04-02', desktop: 97, mobile: 180 },
-  { date: '2024-04-03', desktop: 167, mobile: 120 },
-  { date: '2024-04-04', desktop: 242, mobile: 260 },
-  { date: '2024-04-05', desktop: 373, mobile: 290 },
-  { date: '2024-04-06', desktop: 301, mobile: 340 },
-  { date: '2024-04-07', desktop: 245, mobile: 180 },
-  { date: '2024-04-08', desktop: 409, mobile: 320 },
-  { date: '2024-04-09', desktop: 59, mobile: 110 },
-  { date: '2024-04-10', desktop: 261, mobile: 190 },
-  { date: '2024-04-11', desktop: 327, mobile: 350 },
-  { date: '2024-04-12', desktop: 292, mobile: 210 },
-  { date: '2024-04-13', desktop: 342, mobile: 380 },
-  { date: '2024-04-14', desktop: 137, mobile: 220 },
-  { date: '2024-04-15', desktop: 120, mobile: 170 },
-  { date: '2024-04-16', desktop: 138, mobile: 190 },
-  { date: '2024-04-17', desktop: 446, mobile: 360 },
-  { date: '2024-04-18', desktop: 364, mobile: 410 },
-  { date: '2024-04-19', desktop: 243, mobile: 180 },
-  { date: '2024-04-20', desktop: 89, mobile: 150 },
-  { date: '2024-04-21', desktop: 137, mobile: 200 },
-  { date: '2024-04-22', desktop: 224, mobile: 170 },
-  { date: '2024-04-23', desktop: 138, mobile: 230 },
-  { date: '2024-04-24', desktop: 387, mobile: 290 },
-  { date: '2024-04-25', desktop: 215, mobile: 250 },
-  { date: '2024-04-26', desktop: 75, mobile: 130 },
-  { date: '2024-04-27', desktop: 383, mobile: 420 },
-  { date: '2024-04-28', desktop: 122, mobile: 180 },
-  { date: '2024-04-29', desktop: 315, mobile: 240 },
-  { date: '2024-04-30', desktop: 454, mobile: 380 },
-  { date: '2024-05-01', desktop: 165, mobile: 220 },
-  { date: '2024-05-02', desktop: 293, mobile: 310 },
-  { date: '2024-05-03', desktop: 247, mobile: 190 },
-  { date: '2024-05-04', desktop: 385, mobile: 420 },
-  { date: '2024-05-05', desktop: 481, mobile: 390 },
-  { date: '2024-05-06', desktop: 498, mobile: 520 },
-  { date: '2024-05-07', desktop: 388, mobile: 300 },
-  { date: '2024-05-08', desktop: 149, mobile: 210 },
-  { date: '2024-05-09', desktop: 227, mobile: 180 },
-  { date: '2024-05-10', desktop: 293, mobile: 330 },
-  { date: '2024-05-11', desktop: 335, mobile: 270 },
-  { date: '2024-05-12', desktop: 197, mobile: 240 },
-  { date: '2024-05-13', desktop: 197, mobile: 160 },
-  { date: '2024-05-14', desktop: 448, mobile: 490 },
-  { date: '2024-05-15', desktop: 473, mobile: 380 },
-  { date: '2024-05-16', desktop: 338, mobile: 400 },
-  { date: '2024-05-17', desktop: 499, mobile: 420 },
-  { date: '2024-05-18', desktop: 315, mobile: 350 },
-  { date: '2024-05-19', desktop: 235, mobile: 180 },
-  { date: '2024-05-20', desktop: 177, mobile: 230 },
-  { date: '2024-05-21', desktop: 82, mobile: 140 },
-  { date: '2024-05-22', desktop: 81, mobile: 120 },
-  { date: '2024-05-23', desktop: 252, mobile: 290 },
-  { date: '2024-05-24', desktop: 294, mobile: 220 },
-  { date: '2024-05-25', desktop: 201, mobile: 250 },
-  { date: '2024-05-26', desktop: 213, mobile: 170 },
-  { date: '2024-05-27', desktop: 420, mobile: 460 },
-  { date: '2024-05-28', desktop: 233, mobile: 190 },
-  { date: '2024-05-29', desktop: 78, mobile: 130 },
-  { date: '2024-05-30', desktop: 340, mobile: 280 },
-  { date: '2024-05-31', desktop: 178, mobile: 230 },
-  { date: '2024-06-01', desktop: 178, mobile: 200 },
-  { date: '2024-06-02', desktop: 470, mobile: 410 },
-  { date: '2024-06-03', desktop: 103, mobile: 160 },
-  { date: '2024-06-04', desktop: 439, mobile: 380 },
-  { date: '2024-06-05', desktop: 88, mobile: 140 },
-  { date: '2024-06-06', desktop: 294, mobile: 250 },
-  { date: '2024-06-07', desktop: 323, mobile: 370 },
-  { date: '2024-06-08', desktop: 385, mobile: 320 },
-  { date: '2024-06-09', desktop: 438, mobile: 480 },
-  { date: '2024-06-10', desktop: 155, mobile: 200 },
-  { date: '2024-06-11', desktop: 92, mobile: 150 },
-  { date: '2024-06-12', desktop: 492, mobile: 420 },
-  { date: '2024-06-13', desktop: 81, mobile: 130 },
-  { date: '2024-06-14', desktop: 426, mobile: 380 },
-  { date: '2024-06-15', desktop: 307, mobile: 350 },
-  { date: '2024-06-16', desktop: 371, mobile: 310 },
-  { date: '2024-06-17', desktop: 475, mobile: 520 },
-  { date: '2024-06-18', desktop: 107, mobile: 170 },
-  { date: '2024-06-19', desktop: 341, mobile: 290 },
-  { date: '2024-06-20', desktop: 408, mobile: 450 },
-  { date: '2024-06-21', desktop: 169, mobile: 210 },
-  { date: '2024-06-22', desktop: 317, mobile: 270 },
-  { date: '2024-06-23', desktop: 480, mobile: 530 },
-  { date: '2024-06-24', desktop: 132, mobile: 180 },
-  { date: '2024-06-25', desktop: 141, mobile: 190 },
-  { date: '2024-06-26', desktop: 434, mobile: 380 },
-  { date: '2024-06-27', desktop: 448, mobile: 490 },
-  { date: '2024-06-28', desktop: 149, mobile: 200 },
-  { date: '2024-06-29', desktop: 103, mobile: 160 },
-  { date: '2024-06-30', desktop: 446, mobile: 400 },
+  { date: '2024-04-01', pending: 222, in_review: 150, resolved: 180 },
+  { date: '2024-04-02', pending: 97, in_review: 180, resolved: 120 },
+  { date: '2024-04-03', pending: 167, in_review: 120, resolved: 140 },
+  { date: '2024-04-04', pending: 242, in_review: 260, resolved: 200 },
+  { date: '2024-04-05', pending: 373, in_review: 290, resolved: 320 },
+  { date: '2024-04-06', pending: 301, in_review: 340, resolved: 280 },
+  { date: '2024-04-07', pending: 245, in_review: 180, resolved: 210 },
+  { date: '2024-04-08', pending: 409, in_review: 320, resolved: 350 },
+  { date: '2024-04-09', pending: 59, in_review: 110, resolved: 80 },
+  { date: '2024-04-10', pending: 261, in_review: 190, resolved: 220 },
+  { date: '2024-04-11', pending: 327, in_review: 350, resolved: 300 },
+  { date: '2024-04-12', pending: 292, in_review: 210, resolved: 250 },
+  { date: '2024-04-13', pending: 342, in_review: 380, resolved: 320 },
+  { date: '2024-04-14', pending: 137, in_review: 220, resolved: 170 },
+  { date: '2024-04-15', pending: 120, in_review: 170, resolved: 140 },
+  { date: '2024-04-16', pending: 138, in_review: 190, resolved: 160 },
+  { date: '2024-04-17', pending: 446, in_review: 360, resolved: 400 },
+  { date: '2024-04-18', pending: 364, in_review: 410, resolved: 380 },
+  { date: '2024-04-19', pending: 243, in_review: 180, resolved: 210 },
+  { date: '2024-04-20', pending: 89, in_review: 150, resolved: 110 },
+  { date: '2024-04-21', pending: 137, in_review: 200, resolved: 160 },
+  { date: '2024-04-22', pending: 224, in_review: 170, resolved: 190 },
+  { date: '2024-04-23', pending: 138, in_review: 230, resolved: 180 },
+  { date: '2024-04-24', pending: 387, in_review: 290, resolved: 330 },
+  { date: '2024-04-25', pending: 215, in_review: 250, resolved: 230 },
+  { date: '2024-04-26', pending: 75, in_review: 130, resolved: 100 },
+  { date: '2024-04-27', pending: 383, in_review: 420, resolved: 390 },
+  { date: '2024-04-28', pending: 122, in_review: 180, resolved: 150 },
+  { date: '2024-04-29', pending: 315, in_review: 240, resolved: 270 },
+  { date: '2024-04-30', pending: 454, in_review: 380, resolved: 410 },
+  { date: '2024-05-01', pending: 165, in_review: 220, resolved: 190 },
+  { date: '2024-05-02', pending: 293, in_review: 310, resolved: 300 },
+  { date: '2024-05-03', pending: 247, in_review: 190, resolved: 210 },
+  { date: '2024-05-04', pending: 385, in_review: 420, resolved: 400 },
+  { date: '2024-05-05', pending: 481, in_review: 390, resolved: 430 },
+  { date: '2024-05-06', pending: 498, in_review: 520, resolved: 500 },
+  { date: '2024-05-07', pending: 388, in_review: 300, resolved: 340 },
+  { date: '2024-05-08', pending: 149, in_review: 210, resolved: 180 },
+  { date: '2024-05-09', pending: 227, in_review: 180, resolved: 200 },
+  { date: '2024-05-10', pending: 293, in_review: 330, resolved: 310 },
+  { date: '2024-05-11', pending: 335, in_review: 270, resolved: 300 },
+  { date: '2024-05-12', pending: 197, in_review: 240, resolved: 210 },
+  { date: '2024-05-13', pending: 197, in_review: 160, resolved: 170 },
+  { date: '2024-05-14', pending: 448, in_review: 490, resolved: 460 },
+  { date: '2024-05-15', pending: 473, in_review: 380, resolved: 420 },
+  { date: '2024-05-16', pending: 338, in_review: 400, resolved: 360 },
+  { date: '2024-05-17', pending: 499, in_review: 420, resolved: 450 },
+  { date: '2024-05-18', pending: 315, in_review: 350, resolved: 330 },
+  { date: '2024-05-19', pending: 235, in_review: 180, resolved: 200 },
+  { date: '2024-05-20', pending: 177, in_review: 230, resolved: 200 },
+  { date: '2024-05-21', pending: 82, in_review: 140, resolved: 110 },
+  { date: '2024-05-22', pending: 81, in_review: 120, resolved: 100 },
+  { date: '2024-05-23', pending: 252, in_review: 290, resolved: 270 },
+  { date: '2024-05-24', pending: 294, in_review: 220, resolved: 250 },
+  { date: '2024-05-25', pending: 201, in_review: 250, resolved: 220 },
+  { date: '2024-05-26', pending: 213, in_review: 170, resolved: 190 },
+  { date: '2024-05-27', pending: 420, in_review: 460, resolved: 440 },
+  { date: '2024-05-28', pending: 233, in_review: 190, resolved: 210 },
+  { date: '2024-05-29', pending: 78, in_review: 130, resolved: 100 },
+  { date: '2024-05-30', pending: 340, in_review: 280, resolved: 310 },
+  { date: '2024-05-31', pending: 178, in_review: 230, resolved: 200 },
+  { date: '2024-06-01', pending: 178, in_review: 200, resolved: 190 },
+  { date: '2024-06-02', pending: 470, in_review: 410, resolved: 440 },
+  { date: '2024-06-03', pending: 103, in_review: 160, resolved: 130 },
+  { date: '2024-06-04', pending: 439, in_review: 380, resolved: 410 },
+  { date: '2024-06-05', pending: 88, in_review: 140, resolved: 110 },
+  { date: '2024-06-06', pending: 294, in_review: 250, resolved: 270 },
+  { date: '2024-06-07', pending: 323, in_review: 370, resolved: 340 },
+  { date: '2024-06-08', pending: 385, in_review: 320, resolved: 350 },
+  { date: '2024-06-09', pending: 438, in_review: 480, resolved: 460 },
+  { date: '2024-06-10', pending: 155, in_review: 200, resolved: 180 },
+  { date: '2024-06-11', pending: 92, in_review: 150, resolved: 120 },
+  { date: '2024-06-12', pending: 492, in_review: 420, resolved: 450 },
+  { date: '2024-06-13', pending: 81, in_review: 130, resolved: 100 },
+  { date: '2024-06-14', pending: 426, in_review: 380, resolved: 400 },
+  { date: '2024-06-15', pending: 307, in_review: 350, resolved: 330 },
+  { date: '2024-06-16', pending: 371, in_review: 310, resolved: 340 },
+  { date: '2024-06-17', pending: 475, in_review: 520, resolved: 500 },
+  { date: '2024-06-18', pending: 107, in_review: 170, resolved: 140 },
+  { date: '2024-06-19', pending: 341, in_review: 290, resolved: 310 },
+  { date: '2024-06-20', pending: 408, in_review: 450, resolved: 430 },
+  { date: '2024-06-21', pending: 169, in_review: 210, resolved: 190 },
+  { date: '2024-06-22', pending: 317, in_review: 270, resolved: 290 },
+  { date: '2024-06-23', pending: 480, in_review: 530, resolved: 500 },
+  { date: '2024-06-24', pending: 132, in_review: 180, resolved: 160 },
+  { date: '2024-06-25', pending: 141, in_review: 190, resolved: 170 },
+  { date: '2024-06-26', pending: 434, in_review: 380, resolved: 400 },
+  { date: '2024-06-27', pending: 448, in_review: 490, resolved: 470 },
+  { date: '2024-06-28', pending: 149, in_review: 200, resolved: 180 },
+  { date: '2024-06-29', pending: 103, in_review: 160, resolved: 130 },
+  { date: '2024-06-30', pending: 446, in_review: 400, resolved: 420 },
 ]
 
 const chartConfig = {
   visitors: {
     label: 'Visitors',
   },
-  desktop: {
-    label: 'Desktop',
+  pending: {
+    label: 'Pending',
     color: 'var(--chart-1)',
   },
-  mobile: {
-    label: 'Mobile',
-    color: 'var(--chart-2)',
+  in_review: {
+    label: 'In Review',
+    color: '#800080',
+  },
+  resolved: {
+    label: 'Resolved',
+    color: '#0202ff',
   },
 } satisfies ChartConfig
 
@@ -169,13 +173,17 @@ export function ChartAreaInteractive() {
         <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
           <AreaChart data={filteredData}>
             <defs>
-              <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-desktop)" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="var(--color-desktop)" stopOpacity={0.1} />
+              <linearGradient id="fillPending" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-pending)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-pending)" stopOpacity={0.1} />
               </linearGradient>
-              <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-mobile)" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="var(--color-mobile)" stopOpacity={0.1} />
+              <linearGradient id="fillInReview" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-in_review)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-in_review)" stopOpacity={0.1} />
+              </linearGradient>
+              <linearGradient id="fillResolved" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-resolved)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-resolved)" stopOpacity={0.1} />
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} />
@@ -207,8 +215,21 @@ export function ChartAreaInteractive() {
                 />
               }
             />
-            <Area dataKey="mobile" type="natural" fill="url(#fillMobile)" stroke="var(--color-mobile)" stackId="a" />
-            <Area dataKey="desktop" type="natural" fill="url(#fillDesktop)" stroke="var(--color-desktop)" stackId="a" />
+            <Area
+              dataKey="resolved"
+              type="natural"
+              fill="url(#fillResolved)"
+              stroke="var(--color-resolved)"
+              stackId="a"
+            />
+            <Area
+              dataKey="in_review"
+              type="natural"
+              fill="url(#fillInReview)"
+              stroke="var(--color-in_review)"
+              stackId="a"
+            />
+            <Area dataKey="pending" type="natural" fill="url(#fillPending)" stroke="var(--color-pending)" stackId="a" />
             <ChartLegend content={<ChartLegendContent />} />
           </AreaChart>
         </ChartContainer>
