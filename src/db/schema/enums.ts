@@ -28,7 +28,7 @@ export const resolutionTypeEnum = pgEnum('resolution_type', [
 ])
 export const complaintStatusEnum = pgEnum('complaint_status', ['pending', 'in-review', 'resolved'])
 export const priorityEnum = pgEnum('priority', ['low', 'normal', 'high'])
-export const fieldChangedEnum = pgEnum('field_changed', ['status', 'priority'])
+export const fieldChangedEnum = pgEnum('field_changed', ['status', 'priority', 'created'])
 export const notificationTypeEnum = pgEnum('notification_type', [
   'status_change',
   'priority_change',

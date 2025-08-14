@@ -1,12 +1,13 @@
 'use server'
 
-import { complaintAttachments, complaints, db, NewComplaint } from '@/db/schema'
-import { authUser } from '../helper-functions'
-import crypto from 'crypto'
-import { count, desc, eq } from 'drizzle-orm'
+import { complaintAttachments, complaints, complaintStatusHistory, db, NewComplaint, users } from '@/db/schema'
+import { authUser, deleteFromCloudinary } from '../helper-functions'
+import { and, count, desc, eq } from 'drizzle-orm'
+import { revalidatePath } from 'next/cache'
 
 export async function createComplaintWithAttachment(complaintData: FormData) {
-  const cloudinaryPublicId = complaintData.get('cloudinaryPublicId') as string
+  const fileCount = Number(complaintData.get('fileCount')) || 0
+  const cloudinaryPublicIds: string[] = []
 
   try {
     const title = complaintData.get('title') as string
@@ -15,10 +16,33 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
     const faculty = complaintData.get('faculty') as string
     const resolutionType = complaintData.get('resolutionType') as string
     const { userId } = await authUser() // Get userId from session
-    const cloudinaryUrl = complaintData.get('cloudinaryUrl') as string
-    const fileSize = complaintData.get('fileSize') ? Number(complaintData.get('fileSize')) : null
-    const fileType = complaintData.get('fileType') as string
-    const fileName = complaintData.get('fileName') as string
+
+    // Collect all file data
+    const fileDataArray: Array<{
+      cloudinaryUrl: string
+      cloudinaryPublicId: string
+      fileSize: number | null
+      fileType: string
+      fileName: string
+    }> = []
+    for (let i = 0; i < fileCount; i++) {
+      const cloudinaryUrl = complaintData.get(`cloudinaryUrl_${i}`) as string
+      const cloudinaryPublicId = complaintData.get(`cloudinaryPublicId_${i}`) as string
+      const fileSize = complaintData.get(`fileSize_${i}`) ? Number(complaintData.get(`fileSize_${i}`)) : null
+      const fileType = complaintData.get(`fileType_${i}`) as string
+      const fileName = complaintData.get(`fileName_${i}`) as string
+
+      if (cloudinaryUrl && cloudinaryUrl !== '') {
+        fileDataArray.push({
+          cloudinaryUrl,
+          cloudinaryPublicId,
+          fileSize,
+          fileType,
+          fileName,
+        })
+        cloudinaryPublicIds.push(cloudinaryPublicId)
+      }
+    }
 
     const result = await db.transaction(async (tx) => {
       const newComplaintData: NewComplaint = {
@@ -32,20 +56,34 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
 
       const [complaint] = await tx.insert(complaints).values(newComplaintData).returning()
 
-      // Insert attachment only if file was uploaded
-      if (cloudinaryUrl && cloudinaryPublicId && fileName) {
-        // Validate required attachment fields
-        if (!fileType) {
-          throw new Error('File type is required for attachment')
-        }
+      // Insert initial status history entry
+      await tx.insert(complaintStatusHistory).values({
+        complaintId: complaint.id,
+        changedBy: userId,
+        fieldChanged: 'created',
+        oldValue: null, // No previous value for new complaints
+        newValue: 'pending', // Default status for new complaints
+        notes: 'Complaint created',
+      })
+
+      // Insert attachments for all uploaded files
+      for (const fileData of fileDataArray) {
+        // Use fallback values for missing fields
+        const safeFileName =
+          fileData.fileName && fileData.fileName.trim() !== '' ? fileData.fileName.trim() : 'unknown_file'
+        const safeFileType = fileData.fileType && fileData.fileType.trim() !== '' ? fileData.fileType.trim() : 'unknown'
+        const safePublicId =
+          fileData.cloudinaryPublicId && fileData.cloudinaryPublicId.trim() !== ''
+            ? fileData.cloudinaryPublicId.trim()
+            : 'unknown_id'
 
         const attachmentData = {
           complaintId: complaint.id,
-          fileName,
-          fileType,
-          fileSize: fileSize || 0,
-          cloudinaryPublicId,
-          cloudinaryUrl,
+          fileName: safeFileName,
+          fileType: safeFileType,
+          fileSize: fileData.fileSize || 0,
+          cloudinaryPublicId: safePublicId,
+          cloudinaryUrl: fileData.cloudinaryUrl.trim(),
         }
 
         await tx.insert(complaintAttachments).values(attachmentData)
@@ -56,34 +94,10 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
 
     return { success: true, complaint: result }
   } catch (error) {
-    // Clean up uploaded file on error
-    if (cloudinaryPublicId) {
-      try {
-        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-        const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY
-        const apiSecret = process.env.CLOUDINARY_API_SECRET
-
-        if (cloudName && apiKey && apiSecret) {
-          // Generate signature for Cloudinary API request
-          const timestamp = Math.round(new Date().getTime() / 1000)
-          const stringToSign = `public_id=${cloudinaryPublicId}&timestamp=${timestamp}${apiSecret}`
-          const signature = crypto.createHash('sha1').update(stringToSign).digest('hex')
-
-          await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-              public_id: cloudinaryPublicId,
-              api_key: apiKey,
-              timestamp: timestamp.toString(),
-              signature: signature,
-            }),
-          })
-        }
-      } catch (cleanupError) {
-        console.error('Cloudinary Cleanup Error', cleanupError)
+    // Clean up uploaded files on error
+    for (const cloudinaryPublicId of cloudinaryPublicIds) {
+      if (cloudinaryPublicId) {
+        await deleteFromCloudinary(cloudinaryPublicId)
       }
     }
 
@@ -166,44 +180,116 @@ export async function getComplaintStats() {
   }
 }
 
-// export async function getComplaintById(complaintId: string) {
-//   try {
-//     const { userId } = await authUser()
-//     if (!userId) {
-//       return { success: false, error: 'User not authenticated' }
-//     }
-//     // Fetch complaint details along with user info
-//     const [complaint] = await db
-//       .select()
-//       .from(complaints)
-//       .leftJoin(complaintAttachments, eq(complaints.id, complaintAttachments.complaintId))
-//       .where(eq(complaints.id, complaintId))
-//     if (!complaint) {
-//       return { success: false, error: 'Complaint not found' }
-//     }
-//     // Fetch attachments
-//     const attachments = await db
-//       .select()
-//       .from(complaintAttachments)
-//       .where(eq(complaintAttachments.complaintId, complaintId))
-//     // Fetch status history
-//     const statusHistory = await db
-//       .select()
-//       .from(complaints.statusHistory)
-//       .leftJoin(users, eq(complaints.statusHistory.changedBy, users.id))
-//       .where(eq(complaints.statusHistory.complaintId, complaintId))
-//       .orderBy(desc(complaints.statusHistory.changedAt))
-//     // Fetch feedback if exists
-//     const [feedback] = await db
-//       .select()
-//       .from(complaints.feedback)
-//       .where(eq(complaints.feedback.complaintId, complaintId))
-//     return {  success: true, data: { ...complaint, attachments, statusHistory, feedback } }
-//   } catch (error) {
-//     console.error('Error fetching complaint by ID:', error)
-//     return { success: false, error: 'Failed to fetch complaint details' }
-//   }
-// }
+export async function withdrawComplaint(complaintId: string) {
+  try {
+    const { userId } = await authUser()
+    if (!userId) {
+      return { success: false, error: 'User not authenticated' }
+    }
+
+    // First, fetch all attachments for this complaint to get Cloudinary public IDs
+    const attachments = await db
+      .select({
+        cloudinaryPublicId: complaintAttachments.cloudinaryPublicId,
+      })
+      .from(complaintAttachments)
+      .where(eq(complaintAttachments.complaintId, complaintId))
+
+    // Delete files from Cloudinary
+    for (const attachment of attachments) {
+      if (attachment.cloudinaryPublicId) {
+        await deleteFromCloudinary(attachment.cloudinaryPublicId)
+      }
+    }
+
+    // Delete the complaint (attachments will be cascade deleted due to foreign key constraint)
+    await db.delete(complaints).where(and(eq(complaints.id, complaintId), eq(complaints.userId, userId)))
+
+    revalidatePath('/student/complaints')
+
+    return { success: true, message: 'Complaint withdrawn successfully' }
+  } catch (error) {
+    console.error('Error withdrawing complaint:', error)
+    return { success: false, error: 'Failed to withdraw complaint' }
+  }
+}
+
+export async function getComplaintChartData() {
+  try {
+    const { userId } = await authUser()
+    if (!userId) {
+      return { success: false, error: 'User not authenticated' }
+    }
+    // Fetch complaint counts grouped by month and status
+    const result = await db
+      .select({
+        month: complaints.createdAt,
+        status: complaints.status,
+        count: count(complaints.id).as('count'),
+      })
+      .from(complaints)
+      .where(eq(complaints.userId, userId))
+      .groupBy(complaints.createdAt, complaints.status)
+      .orderBy(complaints.createdAt)
+    // 🎯 Initialize chart data structure
+    const chartData: { month: string; pending: number; in_review: number; resolved: number }[] = []
+    // 🔁 Loop through results and build chart data
+    for (const row of result) {
+      const month = new Date(row.month).toLocaleString('default', { month: 'long' })
+      const existingMonthData = chartData.find((data) => data.month === month)
+      if (existingMonthData) {
+        // Update existing month data
+        if (row.status === 'pending') {
+          existingMonthData.pending += Number(row.count)
+        } else if (row.status === 'in-review') {
+          existingMonthData.in_review += Number(row.count)
+        } else if (row.status === 'resolved') {
+          existingMonthData.resolved += Number(row.count)
+        }
+      } else {
+        // Create new month data entry
+        chartData.push({
+          month,
+          pending: row.status === 'pending' ? Number(row.count) : 0,
+          in_review: row.status === 'in-review' ? Number(row.count) : 0,
+          resolved: row.status === 'resolved' ? Number(row.count) : 0,
+        })
+      }
+    }
+
+    // Get the last 6 months
+    const currentDate = new Date()
+    const last6Months: string[] = []
+
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
+      const monthName = date.toLocaleString('default', { month: 'long' })
+      last6Months.push(monthName)
+    }
+
+    // Fill in missing months with zero counts (only for last 6 months)
+    for (const month of last6Months) {
+      if (!chartData.find((data) => data.month === month)) {
+        chartData.push({
+          month,
+          pending: 0,
+          in_review: 0,
+          resolved: 0,
+        })
+      }
+    }
+
+    // Filter to only include last 6 months and sort by month order
+    const filteredChartData = chartData
+      .filter((data) => last6Months.includes(data.month))
+      .sort((a, b) => last6Months.indexOf(a.month) - last6Months.indexOf(b.month))
+
+    return { success: true, data: filteredChartData }
+  } catch (error) {
+    console.error('Error fetching complaint chart data:', error)
+    return { success: false, error: 'Failed to fetch complaint chart data' }
+  }
+}
 
 /** ADMIN  */
 
@@ -272,7 +358,36 @@ export async function updateStatus(complaintId: string, status: 'pending' | 'in-
       return { success: false, error: 'You are not authorized for this action' }
     }
 
-    await db.update(complaints).set({ status: status }).where(eq(complaints.id, complaintId))
+    // Get current complaint to capture old status
+    const [currentComplaint] = await db.select().from(complaints).where(eq(complaints.id, complaintId))
+
+    if (!currentComplaint) {
+      return { success: false, error: 'Complaint not found' }
+    }
+
+    const oldStatus = currentComplaint.status
+
+    // Update status and add status history in a transaction
+    await db.transaction(async (tx) => {
+      // Update the complaint status
+      await tx.update(complaints).set({ status: status }).where(eq(complaints.id, complaintId))
+
+      // Add status history entry
+      await tx.insert(complaintStatusHistory).values({
+        complaintId,
+        changedBy: user.userId,
+        fieldChanged: 'status',
+        oldValue: oldStatus,
+        newValue: status,
+        notes: `Status changed from ${oldStatus} to ${status}`,
+      })
+    })
+
+    // Revalidate the complaint detail pages
+    revalidatePath(`/admin/complaints/${complaintId}`)
+    revalidatePath(`/student/complaints/${complaintId}`)
+    revalidatePath('/admin/complaints')
+    revalidatePath('/student/complaints')
 
     return { success: true, message: 'Complaint status updated successfully' }
   } catch (error) {
@@ -289,11 +404,222 @@ export async function updatePriority(complaintId: string, priority: 'low' | 'nor
       return { success: false, error: 'You are not authorized for this action' }
     }
 
-    await db.update(complaints).set({ priority: priority }).where(eq(complaints.id, complaintId))
+    // Get current complaint to capture old priority
+    const [currentComplaint] = await db.select().from(complaints).where(eq(complaints.id, complaintId))
+
+    if (!currentComplaint) {
+      return { success: false, error: 'Complaint not found' }
+    }
+
+    const oldPriority = currentComplaint.priority
+
+    // Update priority and add status history in a transaction
+    await db.transaction(async (tx) => {
+      // Update the complaint priority
+      await tx.update(complaints).set({ priority: priority }).where(eq(complaints.id, complaintId))
+
+      // Add status history entry
+      await tx.insert(complaintStatusHistory).values({
+        complaintId,
+        changedBy: user.userId,
+        fieldChanged: 'priority',
+        oldValue: oldPriority,
+        newValue: priority,
+        notes: `Priority changed from ${oldPriority} to ${priority}`,
+      })
+    })
+
+    // Revalidate the complaint detail pages
+    revalidatePath(`/admin/complaints/${complaintId}`)
+    revalidatePath(`/student/complaints/${complaintId}`)
+    revalidatePath('/admin/complaints')
+    revalidatePath('/student/complaints')
 
     return { success: true, message: 'Complaint priority updated successfully' }
   } catch (error) {
     console.error('Error updating priority', error)
     return { success: false, error: 'Failed to update complaint priority' }
+  }
+}
+
+export async function updateStatusHistory(
+  complaintId: string,
+  fieldChanged: 'status' | 'priority' | 'created',
+  oldValue: string,
+  newValue: string,
+  notes?: string,
+) {
+  try {
+    const user = await authUser()
+
+    if (!user || user.role !== 'admin') {
+      return { success: false, error: 'You are not authorized for this action' }
+    }
+
+    await db.insert(complaintStatusHistory).values({
+      complaintId,
+      changedBy: user.userId,
+      fieldChanged,
+      oldValue,
+      newValue,
+      notes,
+    })
+
+    return { success: true, message: 'Status history updated successfully' }
+  } catch (error) {
+    console.error('Error updating status history', error)
+    return { success: false, error: 'Failed to update status history' }
+  }
+}
+
+export async function getAllComplaintChartData() {
+  try {
+    const user = await authUser()
+    if (!user || user.role !== 'admin') {
+      return { success: false, error: 'You are not authorized to access this page' }
+    }
+
+    // 📅 Define the time range for chart data (last 3 months)
+    const currentDate = new Date()
+    const threeMonthsAgo = new Date(currentDate.getFullYear(), currentDate.getMonth() - 3, 1)
+
+    // 📊 Fetch all complaints with essential data for chart generation
+    const allComplaints = await db
+      .select({
+        createdAt: complaints.createdAt,
+        status: complaints.status,
+      })
+      .from(complaints)
+      .orderBy(complaints.createdAt)
+
+    // 🗂️ Group complaints by date for efficient chart data processing
+    const complaintsByDate = new Map<string, { date: string; pending: number; in_review: number; resolved: number }>()
+
+    // � Process each complaint and organize by creation date
+    for (const complaint of allComplaints) {
+      // Convert timestamp to date string (YYYY-MM-DD format)
+      const dateKey = new Date(complaint.createdAt).toISOString().split('T')[0]
+
+      // Initialize date entry if it doesn't exist
+      if (!complaintsByDate.has(dateKey)) {
+        complaintsByDate.set(dateKey, {
+          date: dateKey,
+          pending: 0,
+          in_review: 0,
+          resolved: 0,
+        })
+      }
+
+      // Increment the count for the specific status
+      const dateData = complaintsByDate.get(dateKey)!
+      switch (complaint.status) {
+        case 'pending':
+          dateData.pending += 1
+          break
+        case 'in-review':
+          dateData.in_review += 1
+          break
+        case 'resolved':
+          dateData.resolved += 1
+          break
+      }
+    }
+
+    // 📋 Convert map to array and filter to show only last 3 months
+    const allDateData = Array.from(complaintsByDate.values())
+    const recentComplaintData = allDateData.filter((data) => {
+      const dataDate = new Date(data.date)
+      return dataDate >= threeMonthsAgo
+    })
+
+    // 📈 Sort data chronologically for proper chart display
+    recentComplaintData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+    // 🏫 Fetch complaint distribution by faculty for pie chart
+    const facultyComplaintCounts = await db
+      .select({
+        faculty: complaints.faculty,
+        count: count(complaints.id).as('count'),
+      })
+      .from(complaints)
+      .groupBy(complaints.faculty)
+      .orderBy(desc(count(complaints.id)))
+
+    // 🎨 Define consistent color scheme for faculty visualization
+    const facultyColorMap: Record<string, string> = {
+      science: '#3b82f6', // Blue
+      law: '#dc2626', // Red
+      arts: '#059669', // Green
+      education: '#d97706', // Orange
+      'management science': '#7c3aed', // Purple
+      transport: '#0891b2', // Cyan
+      engineering: '#f59e0b', // Amber
+      medicine: '#10b981', // Emerald
+      agriculture: '#8b5cf6', // Violet
+      other: '#4b5563', // Gray (fallback)
+    }
+
+    // 🔧 Process faculty data for chart consumption
+    const facultyChartData: { faculty: string; complaints: number; fill: string }[] = []
+
+    for (const facultyData of facultyComplaintCounts) {
+      const facultyName = facultyData.faculty || 'Other'
+      const normalizedFacultyName = facultyName.toLowerCase()
+      const displayName = facultyName.charAt(0).toUpperCase() + facultyName.slice(1).toLowerCase()
+      const facultyColor = facultyColorMap[normalizedFacultyName] || facultyColorMap['other']
+
+      facultyChartData.push({
+        faculty: displayName,
+        complaints: Number(facultyData.count),
+        fill: facultyColor,
+      })
+    }
+
+    // 📊 Return structured data for both charts
+    return {
+      success: true,
+      data: {
+        dateChart: recentComplaintData, // Time-series data for area chart
+        facultyChart: facultyChartData, // Faculty distribution for pie chart
+      },
+    }
+  } catch (error) {
+    console.error('Error fetching all complaint chart data:', error)
+    return { success: false, error: 'Failed to fetch all complaint chart data' }
+  }
+}
+
+export const getComplaintById = async (complaintId: string) => {
+  try {
+    const user = await authUser()
+    if (!user) {
+      return { success: false, error: 'User not authenticated' }
+    }
+
+    // Fetch complaint details
+    const [complaint] = await db.select().from(complaints).where(eq(complaints.id, complaintId))
+
+    if (!complaint) {
+      return { success: false, error: 'Complaint not found' }
+    }
+
+    // Fetch attachments
+    const attachments = await db
+      .select()
+      .from(complaintAttachments)
+      .where(eq(complaintAttachments.complaintId, complaintId))
+
+    // Fetch status history
+    const statusHistory = await db
+      .select()
+      .from(complaintStatusHistory)
+      .leftJoin(users, eq(complaintStatusHistory.changedBy, users.id))
+      .where(eq(complaintStatusHistory.complaintId, complaintId))
+      .orderBy(desc(complaintStatusHistory.changedAt))
+
+    return { success: true, data: { complaints: complaint, attachments, statusHistory } }
+  } catch (error) {
+    console.error('Error fetching complaint by ID:', error)
+    return { success: false, error: 'Failed to fetch complaint details' }
   }
 }

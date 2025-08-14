@@ -19,6 +19,8 @@ export const getStatusUpdateColor = (status: string) => {
       return 'bg-blue-500'
     case 'in-review':
       return 'bg-purple-500'
+    default:
+      return 'bg-gray-500'
   }
 }
 
@@ -31,5 +33,19 @@ export const getPriorityColor = (priority: string) => {
       return 'bg-blue-500/20 text-blue-500'
     case 'high':
       return 'bg-red-500/20 text-red-500'
+  }
+}
+
+// for priority status update
+export const getPriorityStatusUpdateColor = (priority: string) => {
+  switch (priority) {
+    case 'low':
+      return 'bg-green-500'
+    case 'normal':
+      return 'bg-blue-500'
+    case 'high':
+      return 'bg-red-500'
+    default:
+      return 'bg-gray-500'
   }
 }
