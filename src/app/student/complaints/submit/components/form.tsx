@@ -61,7 +61,7 @@ export function ComplaintForm() {
       setFileData((prev) => [...prev, fileInfo])
       toast.success(`File "${fileInfo.original_filename}" uploaded successfully`)
     } else {
-      console.error('❌ Upload failed - no file info received')
+      toast.error('❌ Upload failed - no file info received')
     }
   }
 
