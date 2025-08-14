@@ -613,7 +613,7 @@ export const getComplaintById = async (complaintId: string) => {
     const statusHistory = await db
       .select()
       .from(complaintStatusHistory)
-      .leftJoin(users, eq(complaintStatusHistory.changedBy, user.userId))
+      .leftJoin(users, eq(complaintStatusHistory.changedBy, users.id))
       .where(eq(complaintStatusHistory.complaintId, complaintId))
       .orderBy(desc(complaintStatusHistory.changedAt))
 
