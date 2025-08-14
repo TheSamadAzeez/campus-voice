@@ -6,7 +6,6 @@ import { Statistics } from './components/statistics'
 export default async function StudentPage() {
   const dashboardData = await getDashboardData()
   console.log('Chart Data:', dashboardData?.chart)
-
   const defaultStats = {
     total: 0,
     pending: 0,
