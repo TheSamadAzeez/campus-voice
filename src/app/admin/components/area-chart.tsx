@@ -14,8 +14,10 @@ import {
 } from '@/components/ui/chart'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-export const description = 'An interactive area chart'
+export const description = 'Interactive area chart showing complaint trends over time'
 
+// 📊 Demo data for fallback when no real data is available
+// This represents daily complaint counts across different statuses
 const chartData = [
   { date: '2024-04-01', pending: 222, in_review: 150, resolved: 180 },
   { date: '2024-04-02', pending: 97, in_review: 180, resolved: 120 },
@@ -110,49 +112,79 @@ const chartData = [
   { date: '2024-06-30', pending: 446, in_review: 400, resolved: 420 },
 ]
 
+// 🎨 Chart styling and configuration
 const chartConfig = {
   visitors: {
-    label: 'Visitors',
+    label: 'Complaints',
   },
   pending: {
     label: 'Pending',
-    color: 'var(--chart-1)',
+    color: 'var(--chart-1)', // Orange color for pending complaints
   },
   in_review: {
     label: 'In Review',
-    color: '#800080',
+    color: '#800080', // Purple color for complaints under review
   },
   resolved: {
     label: 'Resolved',
-    color: '#0202ff',
+    color: '#0202ff', // Blue color for resolved complaints
   },
 } satisfies ChartConfig
 
-export function ChartAreaInteractive() {
-  const [timeRange, setTimeRange] = React.useState('90d')
+interface ComplaintChartData {
+  date: string
+  pending: number
+  in_review: number
+  resolved: number
+}
 
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date)
-    const referenceDate = new Date('2024-06-30')
-    let daysToSubtract = 90
-    if (timeRange === '30d') {
-      daysToSubtract = 30
-    } else if (timeRange === '7d') {
-      daysToSubtract = 7
+interface ChartAreaInteractiveProps {
+  chartData?: ComplaintChartData[]
+}
+
+export function ChartAreaInteractive({ chartData: realTimeData }: ChartAreaInteractiveProps) {
+  const [selectedTimeRange, setSelectedTimeRange] = React.useState('90d')
+
+  // 📊 Choose data source: real data from database or demo data for fallback
+  const chartDataSource = realTimeData && realTimeData.length > 0 ? realTimeData : chartData
+
+  // 🗓️ Calculate date range based on selected time period
+  const getDateRangeInDays = (range: string): number => {
+    switch (range) {
+      case '7d':
+        return 7
+      case '30d':
+        return 30
+      case '90d':
+        return 90
+      default:
+        return 90
     }
-    const startDate = new Date(referenceDate)
-    startDate.setDate(startDate.getDate() - daysToSubtract)
-    return date >= startDate
-  })
+  }
+
+  // 🔍 Filter data to show only the selected time range
+  const getFilteredChartData = (): ComplaintChartData[] => {
+    const daysToShow = getDateRangeInDays(selectedTimeRange)
+    const today = new Date()
+    const startDate = new Date(today)
+    startDate.setDate(today.getDate() - daysToShow)
+
+    return chartDataSource.filter((dataPoint) => {
+      const dataDate = new Date(dataPoint.date)
+      return dataDate >= startDate
+    })
+  }
+
+  const filteredData = getFilteredChartData()
 
   return (
     <Card className="pt-0">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1">
-          <CardTitle>Area Chart - Interactive</CardTitle>
-          <CardDescription>Showing total visitors for the last 3 months</CardDescription>
+          <CardTitle>Complaint Trends Over Time</CardTitle>
+          <CardDescription>Track complaint status changes over the selected time period</CardDescription>
         </div>
-        <Select value={timeRange} onValueChange={setTimeRange}>
+        <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
           <SelectTrigger className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex" aria-label="Select a value">
             <SelectValue placeholder="Last 3 months" />
           </SelectTrigger>
@@ -172,6 +204,7 @@ export function ChartAreaInteractive() {
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
           <AreaChart data={filteredData}>
+            {/* 🎨 Gradient definitions for each complaint status */}
             <defs>
               <linearGradient id="fillPending" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--color-pending)" stopOpacity={0.8} />
@@ -186,6 +219,8 @@ export function ChartAreaInteractive() {
                 <stop offset="95%" stopColor="var(--color-resolved)" stopOpacity={0.1} />
               </linearGradient>
             </defs>
+
+            {/* 📊 Chart grid and axis configuration */}
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="date"
@@ -201,6 +236,8 @@ export function ChartAreaInteractive() {
                 })
               }}
             />
+
+            {/* 🖱️ Interactive tooltip configuration */}
             <ChartTooltip
               cursor={false}
               content={
@@ -209,12 +246,15 @@ export function ChartAreaInteractive() {
                     return new Date(value).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
+                      year: 'numeric',
                     })
                   }}
                   indicator="dot"
                 />
               }
             />
+
+            {/* 📈 Stacked area layers - order matters for visual hierarchy */}
             <Area
               dataKey="resolved"
               type="natural"
@@ -230,6 +270,8 @@ export function ChartAreaInteractive() {
               stackId="a"
             />
             <Area dataKey="pending" type="natural" fill="url(#fillPending)" stroke="var(--color-pending)" stackId="a" />
+
+            {/* 📋 Chart legend */}
             <ChartLegend content={<ChartLegendContent />} />
           </AreaChart>
         </ChartContainer>
