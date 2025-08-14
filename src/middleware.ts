@@ -11,13 +11,14 @@ export default clerkMiddleware(async (auth, req) => {
   // Handle admin routes
   if (isAdminRoute(req)) {
     if (!isAdmin) {
-      return NextResponse.redirect(new URL('/', req.url))
+      // Redirect non-admin users trying to access admin routes to student dashboard
+      return NextResponse.redirect(new URL('/student', req.url))
     }
     return
   }
 
-  // Handle non-admin routes for admin users
-  if (isAdmin && !isAdminRoute(req)) {
+  // Handle non-admin routes for admin users (except public routes)
+  if (isAdmin && !isAdminRoute(req) && !isPublicRoute(req)) {
     return NextResponse.redirect(new URL('/admin', req.url))
   }
 
