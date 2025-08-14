@@ -479,8 +479,12 @@ export async function getAllComplaintChartData() {
       return { success: false, error: 'You are not authorized to access this page' }
     }
 
-    // Fetch complaint counts grouped by date and status
-    const result = await db
+    // Get the last 3 months date range
+    const currentDate = new Date()
+    const threeMonthsAgo = new Date(currentDate.getFullYear(), currentDate.getMonth() - 3, 1)
+
+    // Fetch complaint counts grouped by date and status (for last 3 months)
+    const dateResult = await db
       .select({
         date: complaints.createdAt,
         status: complaints.status,
@@ -490,11 +494,11 @@ export async function getAllComplaintChartData() {
       .groupBy(complaints.createdAt, complaints.status)
       .orderBy(complaints.createdAt)
 
-    // 🎯 Initialize chart data structure
+    // 🎯 Initialize date-based chart data structure
     const chartData: { date: string; pending: number; in_review: number; resolved: number }[] = []
 
-    // 🔁 Loop through results and build chart data
-    for (const row of result) {
+    // 🔁 Loop through results and build date-based chart data
+    for (const row of dateResult) {
       const date = new Date(row.date).toISOString().split('T')[0] // Format as YYYY-MM-DD
       const existingDateData = chartData.find((data) => data.date === date)
       if (existingDateData) {
@@ -517,10 +521,6 @@ export async function getAllComplaintChartData() {
       }
     }
 
-    // Get the last 3 months date range
-    const currentDate = new Date()
-    const threeMonthsAgo = new Date(currentDate.getFullYear(), currentDate.getMonth() - 3, 1)
-
     // Filter to only include last 3 months
     const filteredChartData = chartData.filter((data) => {
       const dataDate = new Date(data.date)
@@ -530,7 +530,62 @@ export async function getAllComplaintChartData() {
     // Sort by date
     filteredChartData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
-    return { success: true, data: filteredChartData }
+    // Fetch complaint counts grouped by faculty (for all time)
+    const facultyResult = await db
+      .select({
+        faculty: complaints.faculty,
+        count: count(complaints.id).as('count'),
+      })
+      .from(complaints)
+      .groupBy(complaints.faculty)
+      .orderBy(desc(count(complaints.id)))
+
+    // Define faculty colors (handle both lowercase and capitalized)
+    const facultyColors: Record<string, string> = {
+      Science: '#3b82f6',
+      science: '#3b82f6',
+      Law: '#dc2626',
+      law: '#dc2626',
+      Arts: '#059669',
+      arts: '#059669',
+      Education: '#d97706',
+      education: '#d97706',
+      'Management Science': '#7c3aed',
+      'management science': '#7c3aed',
+      Transport: '#0891b2',
+      transport: '#0891b2',
+      Engineering: '#f59e0b',
+      engineering: '#f59e0b',
+      Medicine: '#10b981',
+      medicine: '#10b981',
+      Agriculture: '#8b5cf6',
+      agriculture: '#8b5cf6',
+      Other: '#4b5563',
+      other: '#4b5563',
+    }
+
+    // 🎯 Initialize faculty-based chart data structure
+    const facultyChartData: { faculty: string; complaints: number; fill: string }[] = []
+
+    // 🔁 Loop through faculty results and build chart data
+    for (const row of facultyResult) {
+      const faculty = row.faculty || 'Other'
+      const color = facultyColors[faculty] || '#4b5563' // Default gray color
+
+      facultyChartData.push({
+        faculty,
+        complaints: Number(row.count),
+        fill: color,
+      })
+    }
+
+    return {
+      success: true,
+      data: {
+        dateChart: filteredChartData,
+        facultyChart: facultyChartData,
+      },
+    }
   } catch (error) {
     console.error('Error fetching all complaint chart data:', error)
     return { success: false, error: 'Failed to fetch all complaint chart data' }
