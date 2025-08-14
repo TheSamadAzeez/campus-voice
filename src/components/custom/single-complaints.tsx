@@ -22,7 +22,6 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
   const attachments = complaint.data?.attachments
   const statusHistory = complaint.data?.statusHistory
 
-  console.log(attachments, 'attachments')
 
   const statusClassname =
     (complaintData.status.toLowerCase() === 'resolved' && isAdmin) || (complaintData.status != 'resolved' && !isAdmin)
