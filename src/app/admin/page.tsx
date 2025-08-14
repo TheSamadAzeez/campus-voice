@@ -6,6 +6,8 @@ import { getAdminDashboardData } from './actions'
 export default async function AdminPage() {
   const dashboardData = await getAdminDashboardData()
 
+  console.log('Chart Data:', dashboardData?.chart?.data)
+
   const defaultStats = {
     total: 0,
     pending: 0,
@@ -20,11 +22,11 @@ export default async function AdminPage() {
       {/* Complaint Statistics */}
       <div className="flex w-full gap-4">
         <Statistics stats={dashboardData?.stats?.data || defaultStats} />
-        <ChartPieSimple />
+        <ChartPieSimple chartData={dashboardData?.chart?.data?.facultyChart || []} />
       </div>
 
       {/* Charts Section */}
-      <ChartAreaInteractive />
+      <ChartAreaInteractive chartData={dashboardData?.chart?.data?.dateChart || []} />
     </div>
   )
 }
