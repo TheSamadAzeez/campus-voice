@@ -2,7 +2,14 @@
 
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart'
 
 interface DataProps {
   month: string
@@ -51,6 +58,7 @@ export function ChartAreaGradient({ data }: { data?: DataProps[] }) {
               tickFormatter={(value) => value.slice(0, 3)}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+            <ChartLegend content={<ChartLegendContent />} />
             <defs>
               <linearGradient id="fillPending" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--color-pending)" stopOpacity={0.8} />
