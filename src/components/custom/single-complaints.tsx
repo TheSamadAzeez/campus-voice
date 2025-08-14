@@ -24,7 +24,7 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
 
 
   const statusClassname =
-    (complaintData.status.toLowerCase() === 'resolved' && isAdmin) || (complaintData.status != 'resolved' && !isAdmin)
+    (complaintData.status.toLowerCase() === 'resolved' && isAdmin) || (complaintData.status.toLowerCase() !== 'resolved' && !isAdmin)
       ? 'space-y-4 h-fit'
       : 'h-[95px]'
 
