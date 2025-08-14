@@ -479,59 +479,64 @@ export async function getAllComplaintChartData() {
       return { success: false, error: 'You are not authorized to access this page' }
     }
 
-    // Get the last 3 months date range
+    // 📅 Define the time range for chart data (last 3 months)
     const currentDate = new Date()
     const threeMonthsAgo = new Date(currentDate.getFullYear(), currentDate.getMonth() - 3, 1)
 
-    // Fetch complaint counts grouped by date and status (for last 3 months)
-    const dateResult = await db
+    // 📊 Fetch all complaints with essential data for chart generation
+    const allComplaints = await db
       .select({
-        date: complaints.createdAt,
+        createdAt: complaints.createdAt,
         status: complaints.status,
-        count: count(complaints.id).as('count'),
       })
       .from(complaints)
-      .groupBy(complaints.createdAt, complaints.status)
       .orderBy(complaints.createdAt)
 
-    // 🎯 Initialize date-based chart data structure
-    const chartData: { date: string; pending: number; in_review: number; resolved: number }[] = []
+    // 🗂️ Group complaints by date for efficient chart data processing
+    const complaintsByDate = new Map<string, { date: string; pending: number; in_review: number; resolved: number }>()
 
-    // 🔁 Loop through results and build date-based chart data
-    for (const row of dateResult) {
-      const date = new Date(row.date).toISOString().split('T')[0] // Format as YYYY-MM-DD
-      const existingDateData = chartData.find((data) => data.date === date)
-      if (existingDateData) {
-        // Update existing date data
-        if (row.status === 'pending') {
-          existingDateData.pending += Number(row.count)
-        } else if (row.status === 'in-review') {
-          existingDateData.in_review += Number(row.count)
-        } else if (row.status === 'resolved') {
-          existingDateData.resolved += Number(row.count)
-        }
-      } else {
-        // Create new date data entry
-        chartData.push({
-          date,
-          pending: row.status === 'pending' ? Number(row.count) : 0,
-          in_review: row.status === 'in-review' ? Number(row.count) : 0,
-          resolved: row.status === 'resolved' ? Number(row.count) : 0,
+    // � Process each complaint and organize by creation date
+    for (const complaint of allComplaints) {
+      // Convert timestamp to date string (YYYY-MM-DD format)
+      const dateKey = new Date(complaint.createdAt).toISOString().split('T')[0]
+
+      // Initialize date entry if it doesn't exist
+      if (!complaintsByDate.has(dateKey)) {
+        complaintsByDate.set(dateKey, {
+          date: dateKey,
+          pending: 0,
+          in_review: 0,
+          resolved: 0,
         })
+      }
+
+      // Increment the count for the specific status
+      const dateData = complaintsByDate.get(dateKey)!
+      switch (complaint.status) {
+        case 'pending':
+          dateData.pending += 1
+          break
+        case 'in-review':
+          dateData.in_review += 1
+          break
+        case 'resolved':
+          dateData.resolved += 1
+          break
       }
     }
 
-    // Filter to only include last 3 months
-    const filteredChartData = chartData.filter((data) => {
+    // 📋 Convert map to array and filter to show only last 3 months
+    const allDateData = Array.from(complaintsByDate.values())
+    const recentComplaintData = allDateData.filter((data) => {
       const dataDate = new Date(data.date)
       return dataDate >= threeMonthsAgo
     })
 
-    // Sort by date
-    filteredChartData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    // 📈 Sort data chronologically for proper chart display
+    recentComplaintData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
-    // Fetch complaint counts grouped by faculty (for all time)
-    const facultyResult = await db
+    // 🏫 Fetch complaint distribution by faculty for pie chart
+    const facultyComplaintCounts = await db
       .select({
         faculty: complaints.faculty,
         count: count(complaints.id).as('count'),
@@ -540,50 +545,42 @@ export async function getAllComplaintChartData() {
       .groupBy(complaints.faculty)
       .orderBy(desc(count(complaints.id)))
 
-    // Define faculty colors (handle both lowercase and capitalized)
-    const facultyColors: Record<string, string> = {
-      Science: '#3b82f6',
-      science: '#3b82f6',
-      Law: '#dc2626',
-      law: '#dc2626',
-      Arts: '#059669',
-      arts: '#059669',
-      Education: '#d97706',
-      education: '#d97706',
-      'Management Science': '#7c3aed',
-      'management science': '#7c3aed',
-      Transport: '#0891b2',
-      transport: '#0891b2',
-      Engineering: '#f59e0b',
-      engineering: '#f59e0b',
-      Medicine: '#10b981',
-      medicine: '#10b981',
-      Agriculture: '#8b5cf6',
-      agriculture: '#8b5cf6',
-      Other: '#4b5563',
-      other: '#4b5563',
+    // 🎨 Define consistent color scheme for faculty visualization
+    const facultyColorMap: Record<string, string> = {
+      science: '#3b82f6', // Blue
+      law: '#dc2626', // Red
+      arts: '#059669', // Green
+      education: '#d97706', // Orange
+      'management science': '#7c3aed', // Purple
+      transport: '#0891b2', // Cyan
+      engineering: '#f59e0b', // Amber
+      medicine: '#10b981', // Emerald
+      agriculture: '#8b5cf6', // Violet
+      other: '#4b5563', // Gray (fallback)
     }
 
-    // 🎯 Initialize faculty-based chart data structure
+    // 🔧 Process faculty data for chart consumption
     const facultyChartData: { faculty: string; complaints: number; fill: string }[] = []
 
-    // 🔁 Loop through faculty results and build chart data
-    for (const row of facultyResult) {
-      const faculty = row.faculty || 'Other'
-      const color = facultyColors[faculty] || '#4b5563' // Default gray color
+    for (const facultyData of facultyComplaintCounts) {
+      const facultyName = facultyData.faculty || 'Other'
+      const normalizedFacultyName = facultyName.toLowerCase()
+      const displayName = facultyName.charAt(0).toUpperCase() + facultyName.slice(1).toLowerCase()
+      const facultyColor = facultyColorMap[normalizedFacultyName] || facultyColorMap['other']
 
       facultyChartData.push({
-        faculty,
-        complaints: Number(row.count),
-        fill: color,
+        faculty: displayName,
+        complaints: Number(facultyData.count),
+        fill: facultyColor,
       })
     }
 
+    // 📊 Return structured data for both charts
     return {
       success: true,
       data: {
-        dateChart: filteredChartData,
-        facultyChart: facultyChartData,
+        dateChart: recentComplaintData, // Time-series data for area chart
+        facultyChart: facultyChartData, // Faculty distribution for pie chart
       },
     }
   } catch (error) {
