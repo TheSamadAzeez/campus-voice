@@ -4,6 +4,7 @@ import { complaintAttachments, complaints, complaintStatusHistory, db, NewCompla
 import { authUser, deleteFromCloudinary } from '../helper-functions'
 import { and, count, desc, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+import { createNotification } from './notifications'
 
 export async function createComplaintWithAttachment(complaintData: FormData) {
   const fileCount = Number(complaintData.get('fileCount')) || 0
@@ -90,6 +91,15 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
       }
 
       return complaint
+    })
+
+    // Create notification for successful complaint submission
+    await createNotification({
+      userId,
+      complaintId: result.id,
+      title: 'Complaint Submitted Successfully',
+      message: `Your complaint "${title}" has been submitted successfully and is currently pending review.`,
+      type: 'new_complaint',
     })
 
     return { success: true, complaint: result }
@@ -358,7 +368,7 @@ export async function updateStatus(complaintId: string, status: 'pending' | 'in-
       return { success: false, error: 'You are not authorized for this action' }
     }
 
-    // Get current complaint to capture old status
+    // Get current complaint to capture old status and student info
     const [currentComplaint] = await db.select().from(complaints).where(eq(complaints.id, complaintId))
 
     if (!currentComplaint) {
@@ -383,6 +393,15 @@ export async function updateStatus(complaintId: string, status: 'pending' | 'in-
       })
     })
 
+    // Create notification for the student
+    await createNotification({
+      userId: currentComplaint.userId,
+      complaintId: complaintId,
+      title: 'Complaint Status Updated',
+      message: `Your complaint "${currentComplaint.title}" status has been changed from ${oldStatus} to ${status}.`,
+      type: 'status_change',
+    })
+
     // Revalidate the complaint detail pages
     revalidatePath(`/admin/complaints/${complaintId}`)
     revalidatePath(`/student/complaints/${complaintId}`)
@@ -404,7 +423,7 @@ export async function updatePriority(complaintId: string, priority: 'low' | 'nor
       return { success: false, error: 'You are not authorized for this action' }
     }
 
-    // Get current complaint to capture old priority
+    // Get current complaint to capture old priority and student info
     const [currentComplaint] = await db.select().from(complaints).where(eq(complaints.id, complaintId))
 
     if (!currentComplaint) {
@@ -427,6 +446,15 @@ export async function updatePriority(complaintId: string, priority: 'low' | 'nor
         newValue: priority,
         notes: `Priority changed from ${oldPriority} to ${priority}`,
       })
+    })
+
+    // Create notification for the student
+    await createNotification({
+      userId: currentComplaint.userId,
+      complaintId: complaintId,
+      title: 'Complaint Priority Updated',
+      message: `Your complaint "${currentComplaint.title}" priority has been changed from ${oldPriority} to ${priority}.`,
+      type: 'priority_change',
     })
 
     // Revalidate the complaint detail pages
