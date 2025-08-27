@@ -4,7 +4,7 @@ import { complaintAttachments, complaints, complaintStatusHistory, db, NewCompla
 import { authUser, deleteFromCloudinary } from '../helper-functions'
 import { and, count, desc, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
-import { createNotification } from './notifications'
+import { createNotification, createAdminNotification } from './notifications'
 
 export async function createComplaintWithAttachment(complaintData: FormData) {
   const fileCount = Number(complaintData.get('fileCount')) || 0
@@ -99,6 +99,14 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
       complaintId: result.id,
       title: 'Complaint Submitted Successfully',
       message: `Your complaint "${title}" has been submitted successfully and is currently pending review.`,
+      type: 'new_complaint',
+    })
+
+    // Notify all admins about the new complaint
+    await createAdminNotification({
+      complaintId: result.id,
+      title: 'New Complaint Submitted',
+      message: `A new complaint "${title}" has been submitted by a student in the ${faculty} faculty and requires review.`,
       type: 'new_complaint',
     })
 
