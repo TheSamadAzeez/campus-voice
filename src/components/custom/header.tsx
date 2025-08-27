@@ -9,14 +9,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Separator } from '../ui/separator'
 import { getUser } from '@/utils/actions/user'
 import { NotificationBell } from './notification-bell'
+import { AdminNotificationBell } from './admin-notification-bell'
 
 export async function Header() {
   const { user, success } = await getUser()
 
   return (
     <div className="flex items-center justify-end gap-3">
-      {/* Only show notifications for authenticated users */}
-      {success && user && <NotificationBell />}
+      {/* Show appropriate notification bell based on user role */}
+      {success && user && (user.role === 'admin' ? <AdminNotificationBell /> : <NotificationBell />)}
 
       <Button variant="outline" size="icon" className="h-10 w-10 rounded-2xl">
         <MessageSquareText className="size-4" />
