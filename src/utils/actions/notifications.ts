@@ -1,6 +1,6 @@
 'use server'
 
-import { db, notifications } from '@/db/schema'
+import { db, notifications, users } from '@/db/schema'
 import { authUser } from '../helper-functions'
 import { eq, desc, and, count } from 'drizzle-orm'
 
@@ -103,5 +103,35 @@ export async function getUnreadNotificationCount() {
   } catch (error) {
     console.error('Error fetching unread notification count:', error)
     return { success: false, error: 'Failed to fetch unread notification count' }
+  }
+}
+
+export async function createAdminNotification(data: {
+  complaintId?: string
+  title: string
+  message: string
+  type: 'status_change' | 'priority_change' | 'new_complaint' | 'feedback_request' | 'system'
+}) {
+  try {
+    // Get all admin users
+    const adminUsers = await db.select({ id: users.id }).from(users).where(eq(users.role, 'admin'))
+
+    // Create notifications for all admins
+    const notificationPromises = adminUsers.map((admin) =>
+      db.insert(notifications).values({
+        userId: admin.id,
+        complaintId: data.complaintId,
+        title: data.title,
+        message: data.message,
+        type: data.type,
+      }),
+    )
+
+    await Promise.all(notificationPromises)
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error creating admin notifications:', error)
+    return { success: false, error: 'Failed to create admin notifications' }
   }
 }
