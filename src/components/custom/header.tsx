@@ -10,6 +10,7 @@ import { Separator } from '../ui/separator'
 import { getUser } from '@/utils/actions/user'
 import { NotificationBell } from './notification-bell'
 import { AdminNotificationBell } from './admin-notification-bell'
+import { AIAssistantModal } from './ai-assistant-modal'
 
 export async function Header() {
   const { user, success } = await getUser()
@@ -19,9 +20,7 @@ export async function Header() {
       {/* Show appropriate notification bell based on user role */}
       {success && user && (user.role === 'admin' ? <AdminNotificationBell /> : <NotificationBell />)}
 
-      <Button variant="outline" size="icon" className="h-10 w-10 rounded-2xl">
-        <MessageSquareText className="size-4" />
-      </Button>
+      <AIAssistantModal />
 
       <Separator orientation="vertical" className="h-4" />
 
