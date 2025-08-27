@@ -1,6 +1,3 @@
-'use client'
-
-import { useState } from 'react'
 import { MessageSquareText, Bot, Sparkles, Headset } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,10 +10,8 @@ import {
 } from '@/components/ui/dialog'
 
 export function AIAssistantModal() {
-  const [isOpen, setIsOpen] = useState(false)
-
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="icon" className="h-10 w-10 rounded-2xl">
           <Headset className="size-4" />
