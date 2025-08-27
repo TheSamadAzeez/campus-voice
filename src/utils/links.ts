@@ -40,4 +40,9 @@ export const adminLinks: NavLink[] = [
     href: '/admin/complaints',
     icon: NotepadText,
   },
+  {
+    label: 'Notifications',
+    href: '/admin/notifications',
+    icon: Bell,
+  },
 ]
