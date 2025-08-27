@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Check, CheckCheck, Eye, User, Calendar, MapPin } from 'lucide-react'
 import { getUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/utils/actions/notifications'
 import { useRouter } from 'next/navigation'
@@ -219,86 +220,88 @@ export function AdminNotificationsView() {
       </div>
 
       {/* Notifications List */}
-      <div className="space-y-4">
-        {notifications.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="mb-4 text-4xl">🔔</div>
-              <CardTitle className="mb-2">No notifications yet</CardTitle>
-              <CardDescription>
-                You will see notifications here when students submit new complaints or when system updates occur
-              </CardDescription>
-            </CardContent>
-          </Card>
-        ) : (
-          notifications.map((notification) => (
-            <Card
-              key={notification.id}
-              className={`transition-all hover:shadow-md ${
-                !notification.isRead ? `border-l-4 ${getPriorityColor(notification.type)}` : ''
-              }`}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex flex-1 items-start gap-3">
-                    <div className="mt-1 flex-shrink-0 text-2xl">{getNotificationIcon(notification.type)}</div>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <CardTitle className="text-base">{notification.title}</CardTitle>
-                        {!notification.isRead && (
-                          <Badge variant="default" className="px-2 py-0 text-xs">
-                            New
+      <ScrollArea className="h-[520px]">
+        <div className="space-y-4">
+          {notifications.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="mb-4 text-4xl">🔔</div>
+                <CardTitle className="mb-2">No notifications yet</CardTitle>
+                <CardDescription>
+                  You will see notifications here when students submit new complaints or when system updates occur
+                </CardDescription>
+              </CardContent>
+            </Card>
+          ) : (
+            notifications.map((notification) => (
+              <Card
+                key={notification.id}
+                className={`transition-all hover:shadow-md ${
+                  !notification.isRead ? `border-l-4 ${getPriorityColor(notification.type)}` : ''
+                }`}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-1 items-start gap-3">
+                      <div className="mt-1 flex-shrink-0 text-2xl">{getNotificationIcon(notification.type)}</div>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <CardTitle className="text-base">{notification.title}</CardTitle>
+                          {!notification.isRead && (
+                            <Badge variant="default" className="px-2 py-0 text-xs">
+                              New
+                            </Badge>
+                          )}
+                          <Badge variant={getBadgeVariant(notification.type)} className="px-2 py-0 text-xs">
+                            {notification.type.replace('_', ' ')}
                           </Badge>
-                        )}
-                        <Badge variant={getBadgeVariant(notification.type)} className="px-2 py-0 text-xs">
-                          {notification.type.replace('_', ' ')}
-                        </Badge>
-                        {notification.type === 'new_complaint' && !notification.isRead && (
-                          <Badge variant="destructive" className="animate-pulse px-2 py-0 text-xs">
-                            Urgent
-                          </Badge>
-                        )}
-                      </div>
-                      <CardDescription className="text-sm">{notification.message}</CardDescription>
-                      <div className="text-muted-foreground flex items-center gap-4 text-xs">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(notification.createdAt)}
+                          {notification.type === 'new_complaint' && !notification.isRead && (
+                            <Badge variant="destructive" className="animate-pulse px-2 py-0 text-xs">
+                              Urgent
+                            </Badge>
+                          )}
+                        </div>
+                        <CardDescription className="text-sm">{notification.message}</CardDescription>
+                        <div className="text-muted-foreground flex items-center gap-4 text-xs">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(notification.createdAt)}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex flex-shrink-0 items-center gap-2">
-                    {notification.complaintId && (
-                      <Button
-                        variant={notification.type === 'new_complaint' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => handleViewComplaint(notification.complaintId)}
-                        className="gap-2"
-                      >
-                        <Eye className="h-4 w-4" />
-                        {notification.type === 'new_complaint' ? 'Review' : 'View'}
-                      </Button>
-                    )}
-                    {!notification.isRead && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleMarkAsRead(notification.id)}
-                        className="gap-2"
-                      >
-                        <Check className="h-4 w-4" />
-                        Mark read
-                      </Button>
-                    )}
+                    <div className="flex flex-shrink-0 items-center gap-2">
+                      {notification.complaintId && (
+                        <Button
+                          variant={notification.type === 'new_complaint' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => handleViewComplaint(notification.complaintId)}
+                          className="gap-2"
+                        >
+                          <Eye className="h-4 w-4" />
+                          {notification.type === 'new_complaint' ? 'Review' : 'View'}
+                        </Button>
+                      )}
+                      {!notification.isRead && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleMarkAsRead(notification.id)}
+                          className="gap-2"
+                        >
+                          <Check className="h-4 w-4" />
+                          Mark read
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-            </Card>
-          ))
-        )}
-      </div>
+                </CardHeader>
+              </Card>
+            ))
+          )}
+        </div>
+      </ScrollArea>
     </div>
   )
 }
