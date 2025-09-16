@@ -7,6 +7,8 @@ import { Clock, FileText, GraduationCap, MessageSquare } from 'lucide-react'
 import { getComplaintById } from '@/utils/actions/complaints'
 import { StatusButton } from './statusButton'
 import { FeedbackForm } from './feedback-form'
+import { FeedbackDisplay } from './feedback-display'
+import { AdminFeedbackDisplay } from './admin-feedback-display'
 import { AdminActions } from './admin-actions'
 import { WithdrawButton } from './withdraw-button'
 import MediaDisplay from './media-display'
@@ -21,10 +23,12 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
   const complaintData = complaint.data?.complaints
   const attachments = complaint.data?.attachments
   const statusHistory = complaint.data?.statusHistory
-
+  const hasFeedback = complaint.data?.hasFeedback
+  const feedback = complaint.data?.feedback
 
   const statusClassname =
-    (complaintData.status.toLowerCase() === 'resolved' && isAdmin) || (complaintData.status.toLowerCase() !== 'resolved' && !isAdmin)
+    (complaintData.status.toLowerCase() === 'resolved' && isAdmin) ||
+    (complaintData.status.toLowerCase() !== 'resolved' && !isAdmin)
       ? 'space-y-4 h-fit'
       : 'h-[95px]'
 
@@ -165,8 +169,16 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
           </CardContent>
         </Card>
 
-        {/* Feedback Form (if resolved) and if not admin */}
-        {complaintData.status.toLowerCase() === 'resolved' && !isAdmin && <FeedbackForm />}
+        {/* Show existing feedback for admins (if exists) */}
+        {hasFeedback && isAdmin && feedback && <AdminFeedbackDisplay feedback={feedback} />}
+
+        {/* Show existing feedback (if exists and not admin) */}
+        {hasFeedback && !isAdmin && feedback && <FeedbackDisplay feedback={feedback} />}
+
+        {/* Feedback Form (if resolved, not admin, and no feedback provided) */}
+        {complaintData.status.toLowerCase() === 'resolved' && !isAdmin && !hasFeedback && (
+          <FeedbackForm complaintId={complaintId} />
+        )}
 
         {/* Admin Actions (if admin) and Withdraw Complaint Button (if not admin)  */}
         {isAdmin && complaintData.status.toLowerCase() !== 'resolved' ? (
