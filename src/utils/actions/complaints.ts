@@ -1,6 +1,14 @@
 'use server'
 
-import { complaintAttachments, complaints, complaintStatusHistory, db, NewComplaint, users } from '@/db/schema'
+import {
+  complaintAttachments,
+  complaints,
+  complaintStatusHistory,
+  complaintFeedback,
+  db,
+  NewComplaint,
+  users,
+} from '@/db/schema'
 import { authUser, deleteFromCloudinary } from '../helper-functions'
 import { and, count, desc, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
@@ -356,12 +364,26 @@ export async function getAllComplaints(limit?: number) {
     if (!user || user.role !== 'admin') {
       return { success: false, error: 'You are not authorized to access this page' }
     }
-    if (limit) {
-      const allComplaints = await db.select().from(complaints).orderBy(desc(complaints.createdAt)).limit(limit)
-      return { success: true, data: allComplaints }
-    }
-    const allComplaints = await db.select().from(complaints).orderBy(desc(complaints.createdAt))
-    return { success: true, data: allComplaints }
+
+    // Use Promise.all to fetch complaints and their feedback status concurrently
+    const [allComplaints, allFeedback] = await Promise.all([
+      limit
+        ? db.select().from(complaints).orderBy(desc(complaints.createdAt)).limit(limit)
+        : db.select().from(complaints).orderBy(desc(complaints.createdAt)),
+      // Get all feedback to map which complaints have feedback
+      db.select().from(complaintFeedback),
+    ])
+
+    // Create a Set of complaint IDs that have feedback for efficient lookup
+    const complaintsWithFeedback = new Set(allFeedback.map((feedback) => feedback.complaintId))
+
+    // Add hasFeedback property to each complaint
+    const complaintsWithFeedbackInfo = allComplaints.map((complaint) => ({
+      ...complaint,
+      hasFeedback: complaintsWithFeedback.has(complaint.id),
+    }))
+
+    return { success: true, data: complaintsWithFeedbackInfo }
   } catch (error) {
     console.error('Error fetching all complaints:', error)
     return { success: false, error: 'Failed to fetch all complaints' }
@@ -632,28 +654,42 @@ export const getComplaintById = async (complaintId: string) => {
       return { success: false, error: 'User not authenticated' }
     }
 
-    // Fetch complaint details
-    const [complaint] = await db.select().from(complaints).where(eq(complaints.id, complaintId))
+    // Use Promise.all to fetch all data concurrently
+    const [complaintResult, attachments, statusHistory, feedbackResult] = await Promise.all([
+      // Fetch complaint details
+      db.select().from(complaints).where(eq(complaints.id, complaintId)),
+      // Fetch attachments
+      db.select().from(complaintAttachments).where(eq(complaintAttachments.complaintId, complaintId)),
+      // Fetch status history
+      db
+        .select()
+        .from(complaintStatusHistory)
+        .leftJoin(users, eq(complaintStatusHistory.changedBy, users.id))
+        .where(eq(complaintStatusHistory.complaintId, complaintId))
+        .orderBy(desc(complaintStatusHistory.changedAt)),
+      // Fetch feedback data
+      db.select().from(complaintFeedback).where(eq(complaintFeedback.complaintId, complaintId)),
+    ])
+
+    const [complaint] = complaintResult
 
     if (!complaint) {
       return { success: false, error: 'Complaint not found' }
     }
 
-    // Fetch attachments
-    const attachments = await db
-      .select()
-      .from(complaintAttachments)
-      .where(eq(complaintAttachments.complaintId, complaintId))
+    const [feedback] = feedbackResult
+    const hasFeedback = !!feedback
 
-    // Fetch status history
-    const statusHistory = await db
-      .select()
-      .from(complaintStatusHistory)
-      .leftJoin(users, eq(complaintStatusHistory.changedBy, users.id))
-      .where(eq(complaintStatusHistory.complaintId, complaintId))
-      .orderBy(desc(complaintStatusHistory.changedAt))
-
-    return { success: true, data: { complaints: complaint, attachments, statusHistory } }
+    return {
+      success: true,
+      data: {
+        complaints: complaint,
+        attachments,
+        statusHistory,
+        feedback,
+        hasFeedback,
+      },
+    }
   } catch (error) {
     console.error('Error fetching complaint by ID:', error)
     return { success: false, error: 'Failed to fetch complaint details' }
