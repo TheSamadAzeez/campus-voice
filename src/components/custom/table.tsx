@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableCell, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { getPriorityColor, getStatusColor } from '@/utils/status'
-import { Eye } from 'lucide-react'
+import { Eye, MessageSquare } from 'lucide-react'
 import { ScrollArea } from '../ui/scroll-area'
 import Link from 'next/link'
 import { complaintCategoryEnum, complaintStatusEnum, facultyEnum, priorityEnum, resolutionTypeEnum } from '@/db/schema'
@@ -18,6 +18,7 @@ interface COMPLAINT {
   status: (typeof complaintStatusEnum.enumValues)[number]
   priority: (typeof priorityEnum.enumValues)[number]
   createdAt: Date | string
+  hasFeedback?: boolean
 }
 
 export function TableComponent({
@@ -47,6 +48,7 @@ export function TableComponent({
                 {data.length > 0 && data[0].faculty ? <TableHead>Faculty</TableHead> : null}
                 <TableHead>Status</TableHead>
                 <TableHead>Priority</TableHead>
+                {admin && <TableHead>Feedback</TableHead>}
                 <TableHead>Date Submitted</TableHead>
                 <TableHead className="flex justify-center">Actions</TableHead>
               </TableRow>
@@ -69,6 +71,20 @@ export function TableComponent({
                       {complaint.priority.toLowerCase()}
                     </Badge>
                   </TableCell>
+                  {admin && (
+                    <TableCell>
+                      {complaint.hasFeedback ? (
+                        <div className="flex items-center gap-1">
+                          <MessageSquare className="size-4 text-blue-600" />
+                          <Badge variant="secondary" className="text-xs">
+                            Has Feedback
+                          </Badge>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">No feedback</span>
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell>
                     {typeof complaint.createdAt === 'string'
                       ? complaint.createdAt

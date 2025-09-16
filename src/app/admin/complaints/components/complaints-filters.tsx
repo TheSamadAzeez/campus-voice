@@ -18,6 +18,7 @@ interface COMPLAINT {
   status: (typeof complaintStatusEnum.enumValues)[number]
   priority: (typeof priorityEnum.enumValues)[number]
   createdAt: Date | string
+  hasFeedback?: boolean
 }
 
 interface ComplaintsFiltersProps {
@@ -29,6 +30,7 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
+  const [feedbackFilter, setFeedbackFilter] = useState('all')
 
   const filteredComplaints = useMemo(() => {
     return complaints.filter((complaint) => {
@@ -36,9 +38,13 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
       const matchesPriority = priorityFilter === 'all' || complaint.priority === priorityFilter
       const matchesCategory = categoryFilter === 'all' || complaint.category === categoryFilter
       const matchesStatus = statusFilter === 'all' || complaint.status === statusFilter
-      return matchesSearch && matchesCategory && matchesStatus && matchesPriority
+      const matchesFeedback =
+        feedbackFilter === 'all' ||
+        (feedbackFilter === 'with-feedback' && complaint.hasFeedback) ||
+        (feedbackFilter === 'no-feedback' && !complaint.hasFeedback)
+      return matchesSearch && matchesCategory && matchesStatus && matchesPriority && matchesFeedback
     })
-  }, [complaints, searchQuery, categoryFilter, statusFilter, priorityFilter])
+  }, [complaints, searchQuery, categoryFilter, statusFilter, priorityFilter, feedbackFilter])
 
   return (
     <>
@@ -95,6 +101,18 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
                 <SelectItem value="low">Low</SelectItem>
                 <SelectItem value="normal">Normal</SelectItem>
                 <SelectItem value="high">High</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Feedback Filter */}
+            <Select value={feedbackFilter} onValueChange={setFeedbackFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by feedback" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Complaints</SelectItem>
+                <SelectItem value="with-feedback">With Feedback</SelectItem>
+                <SelectItem value="no-feedback">No Feedback</SelectItem>
               </SelectContent>
             </Select>
           </div>
