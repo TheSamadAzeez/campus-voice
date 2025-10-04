@@ -13,7 +13,7 @@ export async function authUser() {
 
   return {
     userId,
-    role: role as 'admin' | 'student',
+    role: role as 'admin' | 'student' | 'department-admin',
   }
 }
 

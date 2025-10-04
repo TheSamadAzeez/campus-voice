@@ -1,16 +1,16 @@
 import { cn } from '@/lib/utils'
+import { getUser } from '@/utils/actions/user'
 import { SignOutButton } from '@clerk/nextjs'
-import { Bell, LogOut, MessageSquareText, User } from 'lucide-react'
+import { LogOut, User } from 'lucide-react'
 import Image from 'next/image'
 import { Suspense } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Button } from '../ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Separator } from '../ui/separator'
-import { getUser } from '@/utils/actions/user'
-import { NotificationBell } from './notification-bell'
 import { AdminNotificationBell } from './admin-notification-bell'
 import { AIAssistantModal } from './ai-assistant-modal'
+import { NotificationBell } from './notification-bell'
 
 export async function Header() {
   const { user, success } = await getUser()
@@ -18,7 +18,9 @@ export async function Header() {
   return (
     <div className="flex items-center justify-end gap-3">
       {/* Show appropriate notification bell based on user role */}
-      {success && user && (user.role === 'admin' ? <AdminNotificationBell /> : <NotificationBell />)}
+      {success &&
+        user &&
+        (user.role === 'admin' || user.role === 'department-admin' ? <AdminNotificationBell /> : <NotificationBell />)}
 
       <AIAssistantModal />
 
@@ -66,6 +68,7 @@ export async function Header() {
                     className={cn(
                       'w-fit self-end rounded-md bg-[#d4e5ff] p-3 py-1 text-xs font-medium text-blue-500',
                       user?.role === 'admin' && 'bg-[#ffe1cc] text-orange-500',
+                      user?.role === 'department-admin' && 'bg-[#efdaff] text-purple-500',
                     )}
                   >
                     {user?.role}
