@@ -31,6 +31,9 @@ export default async function UsersPage() {
   // Get user statistics
   const totalUsers = users.length
   const adminUsers = users.filter((user: ClerkUser) => user.publicMetadata?.role === 'admin').length
+  const departmentAdminUsers = users.filter(
+    (user: ClerkUser) => user.publicMetadata?.role === 'department-admin',
+  ).length
   const studentUsers = users.filter(
     (user: ClerkUser) => user.publicMetadata?.role === 'student' || !user.publicMetadata?.role,
   ).length
@@ -44,7 +47,7 @@ export default async function UsersPage() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -75,6 +78,17 @@ export default async function UsersPage() {
           <CardContent>
             <div className="text-2xl font-bold">{adminUsers}</div>
             <p className="text-muted-foreground text-xs">Admin accounts</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Dept. Admins</CardTitle>
+            <User className="text-muted-foreground h-4 w-4" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{departmentAdminUsers}</div>
+            <p className="text-muted-foreground text-xs">Department admin accounts</p>
           </CardContent>
         </Card>
       </div>
