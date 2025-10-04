@@ -39,7 +39,7 @@ export default async function UsersPage() {
   ).length
 
   return (
-    <div className="container mx-auto space-y-6 p-6">
+    <div className="container mx-auto flex-1 space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center space-x-2">
         <Users className="h-6 w-6" />
@@ -96,13 +96,14 @@ export default async function UsersPage() {
       {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Users from Clerk</CardTitle>
+          <CardTitle>All Users</CardTitle>
           <CardDescription>
-            All users fetched directly from Clerk authentication service. Update roles or delete users as needed.
+            Manage all Campus Voice users including students and department admins. Update user roles or remove accounts
+            as needed.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[600px]">
+          <ScrollArea className="">
             <Table>
               <TableHeader>
                 <TableRow>
