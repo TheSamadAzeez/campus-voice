@@ -12,7 +12,12 @@ export async function POST(req: NextRequest) {
       const { id, email_addresses, first_name, last_name, image_url, public_metadata } = evt.data as UserJSON
 
       const emailAddress = email_addresses?.[0]?.email_address || null
-      const role: 'student' | 'admin' = public_metadata?.role === 'admin' ? 'admin' : 'student'
+      const role: 'student' | 'admin' | 'department-admin' =
+        public_metadata?.role === 'admin'
+          ? 'admin'
+          : public_metadata?.role === 'department-admin'
+            ? 'department-admin'
+            : 'student'
 
       const user = {
         id, // This is the Clerk user ID, stored as primary key
@@ -34,7 +39,12 @@ export async function POST(req: NextRequest) {
       const { id, email_addresses, first_name, last_name, image_url, public_metadata } = evt.data as UserJSON
 
       const emailAddress = email_addresses?.[0]?.email_address || null
-      const role: 'student' | 'admin' = public_metadata?.role === 'admin' ? 'admin' : 'student'
+      const role: 'student' | 'admin' | 'department-admin' =
+        public_metadata?.role === 'admin'
+          ? 'admin'
+          : public_metadata?.role === 'department-admin'
+            ? 'department-admin'
+            : 'student'
 
       const user = {
         id,
