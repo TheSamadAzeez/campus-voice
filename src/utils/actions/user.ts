@@ -85,7 +85,7 @@ export async function getAllUsersFromClerk() {
   }
 }
 
-export async function updateUserRole(userId: string, newRole: 'admin' | 'student') {
+export async function updateUserRole(userId: string, newRole: 'admin' | 'student' | 'department-admin') {
   try {
     // Verify admin access
     const { role } = await authUser()
