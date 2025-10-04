@@ -26,9 +26,9 @@ export function RoleUpdateSelect({ userId, currentRole, userName }: RoleUpdateSe
   const [isPending, startTransition] = useTransition()
   const [role, setRole] = useState(currentRole)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-  const [pendingRole, setPendingRole] = useState<'admin' | 'student' | null>(null)
+  const [pendingRole, setPendingRole] = useState<'admin' | 'student' | 'department-admin' | null>(null)
 
-  const handleRoleChange = (newRole: 'admin' | 'student') => {
+  const handleRoleChange = (newRole: 'admin' | 'student' | 'department-admin') => {
     if (newRole === role) return
 
     setPendingRole(newRole)
@@ -110,11 +110,27 @@ export function RoleUpdateSelect({ userId, currentRole, userName }: RoleUpdateSe
             </DialogTitle>
             <DialogDescription>
               Are you sure you want to change <strong>{userName}</strong>&apos;s role from{' '}
-              <Badge variant={role === 'admin' ? 'destructive' : 'secondary'} className="mx-1">
+              <Badge
+                className={`mx-1 text-xs ${
+                  role === 'admin'
+                    ? 'bg-[#efdaff] text-[#b961ff]'
+                    : role === 'department-admin'
+                      ? 'bg-[#ffe1cc] text-[#ff6900]'
+                      : 'bg-[#d4e5ff] text-[#3e8aff]'
+                }`}
+              >
                 {role}
               </Badge>
               to{' '}
-              <Badge variant={pendingRole === 'admin' ? 'destructive' : 'secondary'} className="mx-1">
+              <Badge
+                className={`mx-1 text-xs ${
+                  pendingRole === 'admin'
+                    ? 'bg-[#efdaff] text-[#b961ff]'
+                    : pendingRole === 'department-admin'
+                      ? 'bg-[#ffe1cc] text-[#ff6900]'
+                      : 'bg-[#d4e5ff] text-[#3e8aff]'
+                }`}
+              >
                 {pendingRole}
               </Badge>
               ?
@@ -127,7 +143,13 @@ export function RoleUpdateSelect({ userId, currentRole, userName }: RoleUpdateSe
             <Button
               onClick={confirmRoleChange}
               disabled={isPending}
-              variant={pendingRole === 'admin' ? 'destructive' : 'default'}
+              className={`${
+                pendingRole === 'admin'
+                  ? 'bg-[#b961ff] text-white hover:bg-[#a855f7]'
+                  : pendingRole === 'department-admin'
+                    ? 'bg-[#ff6900] text-white hover:bg-[#ea580c]'
+                    : 'bg-[#3e8aff] text-white hover:bg-[#2563eb]'
+              }`}
             >
               {isPending ? (
                 <>
