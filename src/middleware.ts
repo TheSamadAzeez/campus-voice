@@ -3,29 +3,54 @@ import { NextResponse } from 'next/server'
 
 const isPublicRoute = createRouteMatcher(['/', '/api/webhooks(.*)'])
 const isAdminRoute = createRouteMatcher(['/admin(.*)'])
+const isStudentRoute = createRouteMatcher(['/student(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth()
-  const isAdmin = sessionClaims?.metadata?.role === 'admin'
+  // Handle public routes first
+  if (isPublicRoute(req)) {
+    return
+  }
 
-  // Handle admin routes
+  // Protect all non-public routes
+  const { userId, sessionClaims } = await auth()
+
+  // If no user, protect the route (this will redirect to sign-in)
+  if (!userId) {
+    await auth.protect()
+    return
+  }
+
+  // Get user role from session claims - default to 'student' if not set
+  const userRole = sessionClaims?.metadata?.role || 'student'
+  const isAdmin = userRole === 'admin'
+
+  // Handle admin routes - only allow admins
   if (isAdminRoute(req)) {
     if (!isAdmin) {
-      // Redirect non-admin users trying to access admin routes to student dashboard
       return NextResponse.redirect(new URL('/student', req.url))
     }
     return
   }
 
-  // Handle non-admin routes for admin users (except public routes)
-  if (isAdmin && !isAdminRoute(req) && !isPublicRoute(req)) {
-    return NextResponse.redirect(new URL('/admin', req.url))
+  // Handle student routes - redirect admins to admin dashboard
+  if (isStudentRoute(req)) {
+    if (isAdmin) {
+      return NextResponse.redirect(new URL('/admin', req.url))
+    }
+    return
   }
 
-  // Protect non-public routes
-  if (!isPublicRoute(req) && !userId) {
-    await auth.protect()
+  // For root or other routes, redirect based on role
+  if (req.nextUrl.pathname === '/') {
+    if (isAdmin) {
+      return NextResponse.redirect(new URL('/admin', req.url))
+    } else {
+      return NextResponse.redirect(new URL('/student', req.url))
+    }
   }
+
+  // Allow all other authenticated routes
+  return
 })
 
 export const config = {
