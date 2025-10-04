@@ -67,8 +67,8 @@ export async function Header() {
                   <span
                     className={cn(
                       'w-fit self-end rounded-md bg-[#d4e5ff] p-3 py-1 text-xs font-medium text-blue-500',
-                      user?.role === 'admin' && 'bg-[#ffe1cc] text-orange-500',
-                      user?.role === 'department-admin' && 'bg-[#efdaff] text-purple-500',
+                      user?.role === 'department-admin' && 'bg-[#ffe1cc] text-orange-500',
+                      user?.role === 'admin' && 'bg-[#efdaff] text-purple-500',
                     )}
                   >
                     {user?.role}
