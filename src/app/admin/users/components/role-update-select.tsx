@@ -12,9 +12,22 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { updateUserRole } from '@/utils/actions/user'
 import { toast } from 'sonner'
 import { Loader2, Shield, UserCheck } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { FACULTIES, DEPARTMENTS } from '@/app/student/complaints/submit/enums'
+
+// Schema for department admin role update
+const departmentAdminSchema = z.object({
+  faculty: z.string().min(1, 'Faculty is required'),
+  department: z.string().min(1, 'Department is required'),
+})
+
+type DepartmentAdminFormData = z.infer<typeof departmentAdminSchema>
 
 interface RoleUpdateSelectProps {
   userId: string
@@ -28,23 +41,57 @@ export function RoleUpdateSelect({ userId, currentRole, userName }: RoleUpdateSe
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [pendingRole, setPendingRole] = useState<'admin' | 'student' | 'department-admin' | null>(null)
 
+  // Form for department admin selection
+  const form = useForm<DepartmentAdminFormData>({
+    resolver: zodResolver(departmentAdminSchema),
+    defaultValues: {
+      faculty: '',
+      department: '',
+    },
+  })
+
+  const selectedFaculty = form.watch('faculty')
+  const availableDepartments = selectedFaculty ? DEPARTMENTS[selectedFaculty as keyof typeof DEPARTMENTS] : []
+
   const handleRoleChange = (newRole: 'admin' | 'student' | 'department-admin') => {
     if (newRole === role) return
 
     setPendingRole(newRole)
+    // Reset form when changing roles
+    form.reset()
     setShowConfirmDialog(true)
   }
 
-  const confirmRoleChange = () => {
+  const confirmRoleChange = async () => {
     if (!pendingRole) return
+
+    // If role is department-admin, validate form first
+    if (pendingRole === 'department-admin') {
+      const isValid = await form.trigger()
+      if (!isValid) {
+        toast.error('Please select both faculty and department')
+        return
+      }
+    }
 
     startTransition(async () => {
       try {
-        const result = await updateUserRole(userId, pendingRole)
+        let departmentInfo = null
+        if (pendingRole === 'department-admin') {
+          const formData = form.getValues()
+          departmentInfo = {
+            faculty: formData.faculty,
+            department: formData.department,
+          }
+        }
+
+        const result = await updateUserRole(userId, pendingRole, departmentInfo)
 
         if (result.success) {
           setRole(pendingRole)
           toast.success(`${userName}'s role updated to ${pendingRole}`)
+          // Reset form
+          form.reset()
         } else {
           toast.error(result.error || 'Failed to update role')
         }
@@ -61,6 +108,7 @@ export function RoleUpdateSelect({ userId, currentRole, userName }: RoleUpdateSe
   const cancelRoleChange = () => {
     setShowConfirmDialog(false)
     setPendingRole(null)
+    form.reset()
   }
 
   return (
@@ -109,33 +157,102 @@ export function RoleUpdateSelect({ userId, currentRole, userName }: RoleUpdateSe
               <span>Confirm Role Change</span>
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to change <strong>{userName}</strong>&apos;s role from{' '}
-              <Badge
-                className={`mx-1 text-xs ${
-                  role === 'admin'
-                    ? 'bg-[#efdaff] text-[#b961ff]'
-                    : role === 'department-admin'
-                      ? 'bg-[#ffe1cc] text-[#ff6900]'
-                      : 'bg-[#d4e5ff] text-[#3e8aff]'
-                }`}
-              >
-                {role}
-              </Badge>
-              to{' '}
-              <Badge
-                className={`mx-1 text-xs ${
-                  pendingRole === 'admin'
-                    ? 'bg-[#efdaff] text-[#b961ff]'
-                    : pendingRole === 'department-admin'
-                      ? 'bg-[#ffe1cc] text-[#ff6900]'
-                      : 'bg-[#d4e5ff] text-[#3e8aff]'
-                }`}
-              >
-                {pendingRole}
-              </Badge>
-              ?
+              {pendingRole === 'department-admin' ? (
+                <>
+                  <p className="mb-4">
+                    You are about to change <strong>{userName}</strong>&apos;s role to{' '}
+                    <Badge className="mx-1 bg-[#ffe1cc] text-xs text-[#ff6900]">Department-Admin</Badge>. Please select
+                    the faculty and department they will be in charge of:
+                  </p>
+                </>
+              ) : (
+                <>
+                  Are you sure you want to change <strong>{userName}</strong>&apos;s role from{' '}
+                  <Badge
+                    className={`mx-1 text-xs ${
+                      role === 'admin'
+                        ? 'bg-[#efdaff] text-[#b961ff]'
+                        : role === 'department-admin'
+                          ? 'bg-[#ffe1cc] text-[#ff6900]'
+                          : 'bg-[#d4e5ff] text-[#3e8aff]'
+                    }`}
+                  >
+                    {role}
+                  </Badge>
+                  to{' '}
+                  <Badge
+                    className={`mx-1 text-xs ${
+                      pendingRole === 'admin'
+                        ? 'bg-[#efdaff] text-[#b961ff]'
+                        : (pendingRole as string) === 'department-admin'
+                          ? 'bg-[#ffe1cc] text-[#ff6900]'
+                          : 'bg-[#d4e5ff] text-[#3e8aff]'
+                    }`}
+                  >
+                    {pendingRole}
+                  </Badge>
+                  ?
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
+
+          {/* Department Selection Form for Department Admin Role */}
+          {pendingRole === 'department-admin' && (
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="faculty" className="text-sm font-medium">
+                  Faculty <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={form.watch('faculty')}
+                  onValueChange={(value) => {
+                    form.setValue('faculty', value)
+                    form.setValue('department', '') // Reset department when faculty changes
+                  }}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select faculty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FACULTIES.map((faculty) => (
+                      <SelectItem key={faculty} value={faculty}>
+                        {faculty}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.faculty && (
+                  <p className="mt-1 text-sm text-red-500">{form.formState.errors.faculty.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="department" className="text-sm font-medium">
+                  Department <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={form.watch('department')}
+                  onValueChange={(value) => form.setValue('department', value)}
+                  disabled={!selectedFaculty}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder={selectedFaculty ? 'Select department' : 'Select faculty first'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableDepartments.map((department) => (
+                      <SelectItem key={department} value={department}>
+                        {department}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.department && (
+                  <p className="mt-1 text-sm text-red-500">{form.formState.errors.department.message}</p>
+                )}
+              </div>
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={cancelRoleChange} disabled={isPending}>
               Cancel
