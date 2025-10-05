@@ -2,6 +2,8 @@
 
 import { auth } from '@clerk/nextjs/server'
 import crypto from 'crypto'
+import { db, users } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 
 export async function authUser() {
   const { userId, redirectToSignUp, sessionClaims } = await auth()
@@ -123,5 +125,48 @@ export async function deleteFromCloudinary(cloudinaryPublicId: string): Promise<
   } catch (cleanupError) {
     console.error('Cloudinary cleanup error for attachment:', cloudinaryPublicId, cleanupError)
     return false
+  }
+}
+
+export async function getDepartmentAdminDepartment(userId?: string): Promise<{
+  success: boolean
+  department?: string
+  error?: string
+}> {
+  try {
+    // If no userId provided, get it from the authenticated user
+    let targetUserId = userId
+    if (!targetUserId) {
+      const user = await authUser()
+      if (!user) {
+        return { success: false, error: 'User not authenticated' }
+      }
+      targetUserId = user.userId
+    }
+
+    // Query the user from the database
+    const [dbUser] = await db.select().from(users).where(eq(users.id, targetUserId)).limit(1)
+
+    if (!dbUser) {
+      return { success: false, error: 'User not found' }
+    }
+
+    // Check if user is a department admin
+    if (dbUser.role !== 'department-admin') {
+      return { success: false, error: 'User is not a department admin' }
+    }
+
+    // Check if department is assigned
+    if (!dbUser.department) {
+      return { success: false, error: 'Department admin has no department assigned' }
+    }
+
+    return {
+      success: true,
+      department: dbUser.department,
+    }
+  } catch (error) {
+    console.error('Error getting department admin department:', error)
+    return { success: false, error: 'Failed to get department information' }
   }
 }
