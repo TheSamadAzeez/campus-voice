@@ -12,6 +12,7 @@ export const complaints = pgTable('complaints', {
   description: text('description').notNull(),
   category: complaintCategoryEnum('category').notNull(),
   faculty: facultyEnum('faculty').notNull(),
+  department: varchar('department', { length: 255 }).notNull(),
   resolutionType: resolutionTypeEnum('resolution_type').default('other').notNull(),
   status: complaintStatusEnum('status').default('pending').notNull(),
   priority: priorityEnum('priority').default('normal').notNull(),
