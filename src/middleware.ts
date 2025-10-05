@@ -3,10 +3,11 @@ import { NextResponse } from 'next/server'
 
 const isPublicRoute = createRouteMatcher(['/', '/api/webhooks(.*)'])
 const isAdminRoute = createRouteMatcher(['/admin(.*)'])
+const isDepartmentRoute = createRouteMatcher(['/department(.*)'])
 const isStudentRoute = createRouteMatcher(['/student(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
-  // Handle public routes first
+  // Handle public routes first - allow everyone to access these
   if (isPublicRoute(req)) {
     return
   }
@@ -21,35 +22,39 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Get user role from session claims - default to 'student' if not set
-  const userRole = sessionClaims?.metadata?.role || 'student'
-  const isAdmin = userRole === 'admin'
+  const userRole = (sessionClaims?.metadata?.role as 'admin' | 'department-admin' | 'student') || 'student'
 
-  // Handle admin routes - only allow admins
+  // Handle admin routes - only allow admin role
   if (isAdminRoute(req)) {
-    if (!isAdmin) {
-      return NextResponse.redirect(new URL('/student', req.url))
+    if (userRole !== 'admin') {
+      // Redirect based on their actual role
+      const redirectPath = userRole === 'department-admin' ? '/department' : '/student'
+      return NextResponse.redirect(new URL(redirectPath, req.url))
     }
     return
   }
 
-  // Handle student routes - redirect admins to admin dashboard
+  // Handle department routes - only allow department-admin role
+  if (isDepartmentRoute(req)) {
+    if (userRole !== 'department-admin') {
+      // Redirect based on their actual role
+      const redirectPath = userRole === 'admin' ? '/admin' : '/student'
+      return NextResponse.redirect(new URL(redirectPath, req.url))
+    }
+    return
+  }
+
+  // Handle student routes - only allow student role
   if (isStudentRoute(req)) {
-    if (isAdmin) {
-      return NextResponse.redirect(new URL('/admin', req.url))
+    if (userRole !== 'student') {
+      // Redirect based on their actual role
+      const redirectPath = userRole === 'admin' ? '/admin' : '/department'
+      return NextResponse.redirect(new URL(redirectPath, req.url))
     }
     return
   }
 
-  // For root or other routes, redirect based on role
-  if (req.nextUrl.pathname === '/') {
-    if (isAdmin) {
-      return NextResponse.redirect(new URL('/admin', req.url))
-    } else {
-      return NextResponse.redirect(new URL('/student', req.url))
-    }
-  }
-
-  // Allow all other authenticated routes
+  // Allow all other authenticated routes (profile, etc.)
   return
 })
 
