@@ -9,7 +9,7 @@ import {
   NewComplaint,
   users,
 } from '@/db/schema'
-import { authUser, deleteFromCloudinary } from '../helper-functions'
+import { authUser, deleteFromCloudinary, getDepartmentAdminDepartment } from '../helper-functions'
 import { and, count, desc, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { createNotification, createAdminNotification } from './notifications'
@@ -23,6 +23,7 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
     const description = complaintData.get('description') as string
     const category = complaintData.get('category') as string
     const faculty = complaintData.get('faculty') as string
+    const department = (complaintData.get('department') as string) || 'General' // Default department if not specified
     const resolutionType = complaintData.get('resolutionType') as string
     const { userId } = await authUser() // Get userId from session
 
@@ -60,6 +61,7 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
         description,
         category: category as any,
         faculty: faculty as any,
+        department,
         resolutionType: resolutionType as any,
       }
 
@@ -322,17 +324,40 @@ export async function getComplaintChartData() {
 export async function getAdminComplaintsStats() {
   try {
     const user = await authUser()
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'department-admin')) {
       return { success: false, error: 'You are not authorized to access this page' }
     }
+
+    // Build query conditions based on user role
+    const whereConditions = []
+
+    // If department admin, get their department and filter complaints
+    if (user.role === 'department-admin') {
+      const departmentResult = await getDepartmentAdminDepartment()
+
+      if (!departmentResult.success || !departmentResult.department) {
+        return { success: false, error: departmentResult.error || 'Failed to get department information' }
+      }
+
+      whereConditions.push(eq(complaints.department, departmentResult.department))
+      whereConditions.push(eq(complaints.sensitive, false))
+    }
+    // For regular admins, no department filtering (they see all complaints)
+
     // 📦 Ask database to group complaints by their status and count each group
-    const result = await db
+    const baseQuery = db
       .select({
         status: complaints.status, // 👈 select the status column
         count: count(complaints.id).as('count'), // 👈 count how many in each group
       })
       .from(complaints)
-      .groupBy(complaints.status) // 👈 group by status (pending, resolved, etc.)
+
+    // Apply where conditions if any exist and execute query
+    const result =
+      whereConditions.length > 0
+        ? await baseQuery.where(and(...whereConditions)).groupBy(complaints.status)
+        : await baseQuery.groupBy(complaints.status) // 👈 group by status (pending, resolved, etc.)
+
     // 🎯 Initialize counts
     const stats = {
       total: 0,
@@ -361,15 +386,35 @@ export async function getAdminComplaintsStats() {
 export async function getAllComplaints(limit?: number) {
   try {
     const user = await authUser()
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'department-admin')) {
       return { success: false, error: 'You are not authorized to access this page' }
     }
 
+    // Build query conditions based on user role
+    const whereConditions = []
+
+    // If department admin, get their department and filter complaints
+    if (user.role === 'department-admin') {
+      const departmentResult = await getDepartmentAdminDepartment()
+
+      if (!departmentResult.success || !departmentResult.department) {
+        return { success: false, error: departmentResult.error || 'Failed to get department information' }
+      }
+
+      whereConditions.push(eq(complaints.department, departmentResult.department))
+      whereConditions.push(eq(complaints.sensitive, false))
+    }
+    // For regular admins, no filtering (they see all complaints)
+
+    // Build the base query
+    const baseQuery = db.select().from(complaints).orderBy(desc(complaints.createdAt))
+
+    // Apply conditions and limit if provided
+    const complaintsQuery = whereConditions.length > 0 ? baseQuery.where(and(...whereConditions)) : baseQuery
+
     // Use Promise.all to fetch complaints and their feedback status concurrently
     const [allComplaints, allFeedback] = await Promise.all([
-      limit
-        ? db.select().from(complaints).orderBy(desc(complaints.createdAt)).limit(limit)
-        : db.select().from(complaints).orderBy(desc(complaints.createdAt)),
+      limit ? complaintsQuery.limit(limit) : complaintsQuery,
       // Get all feedback to map which complaints have feedback
       db.select().from(complaintFeedback),
     ])
@@ -533,22 +578,43 @@ export async function updateStatusHistory(
 export async function getAllComplaintChartData() {
   try {
     const user = await authUser()
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'department-admin')) {
       return { success: false, error: 'You are not authorized to access this page' }
     }
+
+    // Build query conditions based on user role
+    const whereConditions = []
+    let isDepartmentFiltered = false
+
+    // If department admin, get their department and filter complaints
+    if (user.role === 'department-admin') {
+      const departmentResult = await getDepartmentAdminDepartment()
+
+      if (!departmentResult.success || !departmentResult.department) {
+        return { success: false, error: departmentResult.error || 'Failed to get department information' }
+      }
+
+      whereConditions.push(eq(complaints.department, departmentResult.department))
+      whereConditions.push(eq(complaints.sensitive, false))
+      isDepartmentFiltered = true
+    }
+    // For regular admins, no filtering (they see all complaints)
 
     // 📅 Define the time range for chart data (last 3 months)
     const currentDate = new Date()
     const threeMonthsAgo = new Date(currentDate.getFullYear(), currentDate.getMonth() - 3, 1)
 
-    // 📊 Fetch all complaints with essential data for chart generation
-    const allComplaints = await db
+    // 📊 Build the base query for complaints data
+    const baseQuery = db
       .select({
         createdAt: complaints.createdAt,
         status: complaints.status,
       })
       .from(complaints)
       .orderBy(complaints.createdAt)
+
+    // Apply conditions if any exist
+    const allComplaints = whereConditions.length > 0 ? await baseQuery.where(and(...whereConditions)) : await baseQuery
 
     // 🗂️ Group complaints by date for efficient chart data processing
     const complaintsByDate = new Map<string, { date: string; pending: number; in_review: number; resolved: number }>()
@@ -593,53 +659,64 @@ export async function getAllComplaintChartData() {
     // 📈 Sort data chronologically for proper chart display
     recentComplaintData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
-    // 🏫 Fetch complaint distribution by faculty for pie chart
-    const facultyComplaintCounts = await db
-      .select({
-        faculty: complaints.faculty,
-        count: count(complaints.id).as('count'),
-      })
-      .from(complaints)
-      .groupBy(complaints.faculty)
-      .orderBy(desc(count(complaints.id)))
-
-    // 🎨 Define consistent color scheme for faculty visualization
-    const facultyColorMap: Record<string, string> = {
-      science: '#3b82f6', // Blue
-      law: '#dc2626', // Red
-      arts: '#059669', // Green
-      education: '#d97706', // Orange
-      'management science': '#7c3aed', // Purple
-      transport: '#0891b2', // Cyan
-      engineering: '#f59e0b', // Amber
-      medicine: '#10b981', // Emerald
-      agriculture: '#8b5cf6', // Violet
-      other: '#4b5563', // Gray (fallback)
-    }
-
-    // 🔧 Process faculty data for chart consumption
+    // 🏫 Only fetch faculty distribution for admins (not for department-filtered data)
     const facultyChartData: { faculty: string; complaints: number; fill: string }[] = []
 
-    for (const facultyData of facultyComplaintCounts) {
-      const facultyName = facultyData.faculty || 'Other'
-      const normalizedFacultyName = facultyName.toLowerCase()
-      const displayName = facultyName.charAt(0).toUpperCase() + facultyName.slice(1).toLowerCase()
-      const facultyColor = facultyColorMap[normalizedFacultyName] || facultyColorMap['other']
+    if (!isDepartmentFiltered) {
+      const facultyComplaintCounts = await db
+        .select({
+          faculty: complaints.faculty,
+          count: count(complaints.id).as('count'),
+        })
+        .from(complaints)
+        .groupBy(complaints.faculty)
+        .orderBy(desc(count(complaints.id)))
 
-      facultyChartData.push({
-        faculty: displayName,
-        complaints: Number(facultyData.count),
-        fill: facultyColor,
-      })
+      // 🎨 Define consistent color scheme for faculty visualization
+      const facultyColorMap: Record<string, string> = {
+        science: '#3b82f6', // Blue
+        law: '#dc2626', // Red
+        arts: '#059669', // Green
+        education: '#d97706', // Orange
+        'management science': '#7c3aed', // Purple
+        transport: '#0891b2', // Cyan
+        engineering: '#f59e0b', // Amber
+        medicine: '#10b981', // Emerald
+        agriculture: '#8b5cf6', // Violet
+        other: '#4b5563', // Gray (fallback)
+      }
+
+      // 🔧 Process faculty data for chart consumption
+      for (const facultyData of facultyComplaintCounts) {
+        const facultyName = facultyData.faculty || 'Other'
+        const normalizedFacultyName = facultyName.toLowerCase()
+        const displayName = facultyName.charAt(0).toUpperCase() + facultyName.slice(1).toLowerCase()
+        const facultyColor = facultyColorMap[normalizedFacultyName] || facultyColorMap['other']
+
+        facultyChartData.push({
+          faculty: displayName,
+          complaints: Number(facultyData.count),
+          fill: facultyColor,
+        })
+      }
     }
 
-    // 📊 Return structured data for both charts
+    // 📊 Return structured data - include facultyChart only for admins
+    const responseData: {
+      dateChart: typeof recentComplaintData
+      facultyChart?: typeof facultyChartData
+    } = {
+      dateChart: recentComplaintData, // Time-series data for area chart
+    }
+
+    // Only include facultyChart for admins (not department-filtered)
+    if (!isDepartmentFiltered) {
+      responseData.facultyChart = facultyChartData // Faculty distribution for pie chart
+    }
+
     return {
       success: true,
-      data: {
-        dateChart: recentComplaintData, // Time-series data for area chart
-        facultyChart: facultyChartData, // Faculty distribution for pie chart
-      },
+      data: responseData,
     }
   } catch (error) {
     console.error('Error fetching all complaint chart data:', error)
