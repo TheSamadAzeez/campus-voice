@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { boolean, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
 import { complaintCategoryEnum, complaintStatusEnum, facultyEnum, priorityEnum, resolutionTypeEnum } from './enums'
 import { users } from './users'
 
@@ -16,6 +16,7 @@ export const complaints = pgTable('complaints', {
   resolutionType: resolutionTypeEnum('resolution_type').default('other').notNull(),
   status: complaintStatusEnum('status').default('pending').notNull(),
   priority: priorityEnum('priority').default('normal').notNull(),
+  sensitive: boolean('sensitive').default(false).notNull(),
   submittedAt: timestamp('submitted_at').defaultNow().notNull(),
   resolvedAt: timestamp('resolved_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
