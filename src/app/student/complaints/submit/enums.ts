@@ -15,11 +15,19 @@ const RESOLUTION_TYPES = [
   'No Specific Preference',
 ] as const
 
-const FACULTIES = ['Science', 'Management Science', 'Arts', 'Law', 'Transport', 'Education', 'Other'] as const
+const FACULTIES = [
+  'Science',
+  'Management Science',
+  'Arts',
+  'Law',
+  'Transport',
+  'Education',
+  'Computing',
+  'Other',
+] as const
 
 const DEPARTMENTS = {
   Science: [
-    'Computer Science',
     'Mathematics',
     'Physics',
     'Chemistry',
@@ -69,6 +77,16 @@ const DEPARTMENTS = {
     'Adult Education',
     'Physical and Health Education',
     'Library and Information Science',
+  ],
+  Computing: [
+    'Computer Science',
+    'Information Technology',
+    'Software Engineering',
+    'Cybersecurity',
+    'Data Science',
+    'Computer Engineering',
+    'Information Systems',
+    'Artificial Intelligence',
   ],
   Other: ['General Studies', 'Inter-disciplinary Studies'],
 } as const
