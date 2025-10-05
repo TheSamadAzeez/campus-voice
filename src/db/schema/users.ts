@@ -9,6 +9,7 @@ export const users = pgTable('users', {
   lastName: varchar('last_name', { length: 255 }).notNull(),
   profileImage: varchar('profile_image', { length: 500 }),
   role: userRoleEnum('role').default('student').notNull(),
+  faculty: varchar('faculty', { length: 255 }),
   department: varchar('department', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
