@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
-import { CATEGORIES, FACULTIES, RESOLUTION_TYPES } from '../enums'
+import { CATEGORIES, FACULTIES, DEPARTMENTS, RESOLUTION_TYPES } from '../enums'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, Controller } from 'react-hook-form'
 import { CldUploadButton } from 'next-cloudinary'
@@ -19,6 +19,7 @@ import { deleteFromCloudinary } from '@/utils/helper-functions'
 type ComplaintValues = {
   category: string
   faculty: string
+  department?: string
   title: string
   description: string
   resolutionType?: string
@@ -26,6 +27,7 @@ type ComplaintValues = {
 
 export function ComplaintForm() {
   const [fileData, setFileData] = useState<any[]>([])
+  const [selectedFaculty, setSelectedFaculty] = useState<string>('')
   const [optimisticFileData, updateOptimisticFileData] = useOptimistic(
     fileData,
     (state, action: { type: 'remove'; index: number }) => {
@@ -122,6 +124,9 @@ export function ComplaintForm() {
 
     const dbFaculty = facultyMap[data.faculty] || 'other'
     formData.append('faculty', dbFaculty)
+    if (data.department) {
+      formData.append('department', data.department)
+    }
 
     // Map the display values to database enum values
     const resolutionTypeMap: Record<string, string> = {
@@ -161,6 +166,7 @@ export function ComplaintForm() {
       })
       form.reset()
       setFileData([])
+      setSelectedFaculty('')
     } else {
       toast.error('Failed to submit complaint', {
         description: result.error || 'An unexpected error occurred. Please try again later.',
@@ -169,7 +175,7 @@ export function ComplaintForm() {
   }
 
   return (
-    <form noValidate onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4">
+    <form noValidate onSubmit={handleSubmit(onSubmit)} className="w-full space-y-2">
       {/* Category Selection */}
       <div className="flex flex-col gap-2">
         <Label className="font-medium text-gray-700">Category *</Label>
@@ -203,7 +209,15 @@ export function ComplaintForm() {
           name="faculty"
           control={control}
           render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
+            <Select
+              onValueChange={(value) => {
+                field.onChange(value)
+                setSelectedFaculty(value)
+                // Reset department when faculty changes
+                form.setValue('department', '')
+              }}
+              value={field.value}
+            >
               <SelectTrigger id="faculty" className="w-full">
                 <SelectValue placeholder="Select a faculty" />
               </SelectTrigger>
@@ -218,6 +232,32 @@ export function ComplaintForm() {
           )}
         />
         <p className="text-xs text-red-600">{errors.faculty?.message}</p>
+      </div>
+
+      {/* Department Selection */}
+      <div className="flex flex-col gap-2">
+        <Label className="font-medium text-gray-700">Department (Optional)</Label>
+
+        <Controller
+          name="department"
+          control={control}
+          render={({ field }) => (
+            <Select onValueChange={field.onChange} value={field.value} disabled={!selectedFaculty}>
+              <SelectTrigger id="department" className="w-full">
+                <SelectValue placeholder={selectedFaculty ? 'Select a department' : 'Select faculty first'} />
+              </SelectTrigger>
+              <SelectContent>
+                {selectedFaculty &&
+                  DEPARTMENTS[selectedFaculty as keyof typeof DEPARTMENTS]?.map((department) => (
+                    <SelectItem key={department} value={department}>
+                      {department}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+        <p className="text-xs text-red-600">{errors.department?.message}</p>
       </div>
 
       {/* Title */}
