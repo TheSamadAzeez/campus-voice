@@ -85,7 +85,11 @@ export async function getAllUsersFromClerk() {
   }
 }
 
-export async function updateUserRole(userId: string, newRole: 'admin' | 'student' | 'department-admin') {
+export async function updateUserRole(
+  userId: string,
+  newRole: 'admin' | 'student' | 'department-admin',
+  departmentInfo?: { faculty: string; department: string } | null,
+) {
   try {
     // Verify admin access
     const { role } = await authUser()
@@ -93,15 +97,44 @@ export async function updateUserRole(userId: string, newRole: 'admin' | 'student
       return { success: false, error: 'Unauthorized: Admin access required' }
     }
 
+    // Validate department info for department-admin role
+    if (newRole === 'department-admin') {
+      if (!departmentInfo || !departmentInfo.faculty || !departmentInfo.department) {
+        return { success: false, error: 'Department and faculty are required for department-admin role' }
+      }
+    }
+
     const { clerkClient } = await import('@clerk/nextjs/server')
     const client = await clerkClient()
 
     // Update user role in Clerk's public metadata
+    const metadata: { role: string; department?: string; faculty?: string } = {
+      role: newRole,
+    }
+
+    if (newRole === 'department-admin' && departmentInfo) {
+      metadata.department = departmentInfo.department
+      metadata.faculty = departmentInfo.faculty
+    }
+
     await client.users.updateUserMetadata(userId, {
-      publicMetadata: {
-        role: newRole,
-      },
+      publicMetadata: metadata,
     })
+
+    // Update user in database
+    const { db } = await import('@/db/schema')
+    const { users } = await import('@/db/schema')
+    const { eq } = await import('drizzle-orm')
+
+    await db
+      .update(users)
+      .set({
+        role: newRole,
+        faculty: newRole === 'department-admin' && departmentInfo ? departmentInfo.faculty : null,
+        department: newRole === 'department-admin' && departmentInfo ? departmentInfo.department : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
 
     // Revalidate the users page to reflect changes
     const { revalidatePath } = await import('next/cache')
@@ -109,7 +142,7 @@ export async function updateUserRole(userId: string, newRole: 'admin' | 'student
 
     return { success: true, message: `User role updated to ${newRole} successfully` }
   } catch (error) {
-    console.error('Error updating user role in Clerk', error)
+    console.error('Error updating user role:', error)
     return { success: false, error: 'Failed to update user role' }
   }
 }
