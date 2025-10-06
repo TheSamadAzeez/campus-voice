@@ -406,8 +406,8 @@ export async function getAllComplaints(limit?: number) {
     }
     // For regular admins, no filtering (they see all complaints)
 
-    // Build the base query
-    const baseQuery = db.select().from(complaints).orderBy(desc(complaints.createdAt))
+    // Build the base query with sensitive complaints first, then by creation date
+    const baseQuery = db.select().from(complaints).orderBy(desc(complaints.sensitive), desc(complaints.createdAt))
 
     // Apply conditions and limit if provided
     const complaintsQuery = whereConditions.length > 0 ? baseQuery.where(and(...whereConditions)) : baseQuery
