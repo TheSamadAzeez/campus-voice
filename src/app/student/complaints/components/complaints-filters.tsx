@@ -17,6 +17,7 @@ interface COMPLAINT {
   resolutionType: (typeof resolutionTypeEnum.enumValues)[number]
   status: (typeof complaintStatusEnum.enumValues)[number]
   priority: (typeof priorityEnum.enumValues)[number]
+  sensitive: boolean
   createdAt: Date | string
 }
 
@@ -101,7 +102,7 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
         </CardContent>
       </Card>
 
-      <TableComponent data={filteredComplaints} />
+      <TableComponent data={filteredComplaints} userRole="student" />
     </>
   )
 }
