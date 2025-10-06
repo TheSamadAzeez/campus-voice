@@ -6,7 +6,6 @@ import { getAdminDashboardData } from './actions'
 export default async function AdminPage() {
   const dashboardData = await getAdminDashboardData()
 
-
   const defaultStats = {
     total: 0,
     pending: 0,
