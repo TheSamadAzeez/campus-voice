@@ -17,6 +17,7 @@ interface COMPLAINT {
   resolutionType: (typeof resolutionTypeEnum.enumValues)[number]
   status: (typeof complaintStatusEnum.enumValues)[number]
   priority: (typeof priorityEnum.enumValues)[number]
+  sensitive: boolean
   createdAt: Date | string
   hasFeedback?: boolean
 }
@@ -31,9 +32,11 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [feedbackFilter, setFeedbackFilter] = useState('all')
+  const [sensitiveFilter, setSensitiveFilter] = useState('all')
+  const [orderBy, setOrderBy] = useState('sensitive-first')
 
   const filteredComplaints = useMemo(() => {
-    return complaints.filter((complaint) => {
+    const filtered = complaints.filter((complaint) => {
       const matchesSearch = complaint.title.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesPriority = priorityFilter === 'all' || complaint.priority === priorityFilter
       const matchesCategory = categoryFilter === 'all' || complaint.category === categoryFilter
@@ -42,9 +45,40 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
         feedbackFilter === 'all' ||
         (feedbackFilter === 'with-feedback' && complaint.hasFeedback) ||
         (feedbackFilter === 'no-feedback' && !complaint.hasFeedback)
-      return matchesSearch && matchesCategory && matchesStatus && matchesPriority && matchesFeedback
+      const matchesSensitive =
+        sensitiveFilter === 'all' ||
+        (sensitiveFilter === 'sensitive' && complaint.sensitive) ||
+        (sensitiveFilter === 'regular' && !complaint.sensitive)
+      return matchesSearch && matchesCategory && matchesStatus && matchesPriority && matchesFeedback && matchesSensitive
     })
-  }, [complaints, searchQuery, categoryFilter, statusFilter, priorityFilter, feedbackFilter])
+
+    // Apply ordering
+    return [...filtered].sort((a, b) => {
+      switch (orderBy) {
+        case 'sensitive-first':
+          if (a.sensitive !== b.sensitive) {
+            return b.sensitive ? 1 : -1 // Sensitive first
+          }
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() // Then by date
+        case 'title':
+          return a.title.localeCompare(b.title)
+        case 'faculty':
+          return a.faculty.localeCompare(b.faculty)
+        case 'priority':
+          const priorityOrder = { high: 3, normal: 2, low: 1 }
+          return priorityOrder[b.priority] - priorityOrder[a.priority]
+        case 'status':
+          const statusOrder = { pending: 3, 'in-review': 2, resolved: 1 }
+          return statusOrder[b.status] - statusOrder[a.status]
+        case 'date-newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'date-oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        default:
+          return 0
+      }
+    })
+  }, [complaints, searchQuery, categoryFilter, statusFilter, priorityFilter, feedbackFilter, sensitiveFilter, orderBy])
 
   return (
     <>
@@ -53,18 +87,21 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
+          {/* Single Row - All Filters */}
+          <div className="flex items-center gap-3">
             {/* Search Filter */}
             <Input
               placeholder="Search by title..."
               value={searchQuery}
               type="search"
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="min-w-0 flex-1"
             />
+
             {/* Category Filter */}
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by category" />
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
@@ -80,8 +117,8 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
 
             {/* Status Filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
@@ -93,8 +130,8 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
 
             {/* Priority Filter */}
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by priority" />
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Priority" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Priorities</SelectItem>
@@ -104,10 +141,22 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
               </SelectContent>
             </Select>
 
+            {/* Sensitive Filter */}
+            <Select value={sensitiveFilter} onValueChange={setSensitiveFilter}>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Sensitivity" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Complaints</SelectItem>
+                <SelectItem value="sensitive">Sensitive Only</SelectItem>
+                <SelectItem value="regular">Regular Only</SelectItem>
+              </SelectContent>
+            </Select>
+
             {/* Feedback Filter */}
             <Select value={feedbackFilter} onValueChange={setFeedbackFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by feedback" />
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Feedback" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Complaints</SelectItem>
@@ -115,11 +164,27 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
                 <SelectItem value="no-feedback">No Feedback</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* Order By Filter */}
+            <Select value={orderBy} onValueChange={setOrderBy}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Order by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sensitive-first">Sensitive First</SelectItem>
+                <SelectItem value="title">Title (A-Z)</SelectItem>
+                <SelectItem value="faculty">Faculty (A-Z)</SelectItem>
+                <SelectItem value="priority">Priority (High to Low)</SelectItem>
+                <SelectItem value="status">Status (Urgent First)</SelectItem>
+                <SelectItem value="date-newest">Date (Newest First)</SelectItem>
+                <SelectItem value="date-oldest">Date (Oldest First)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
-      <TableComponent data={filteredComplaints} admin />
+      <TableComponent data={filteredComplaints} admin userRole="admin" />
     </>
   )
 }
