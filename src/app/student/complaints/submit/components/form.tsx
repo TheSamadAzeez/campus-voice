@@ -19,7 +19,7 @@ import { deleteFromCloudinary } from '@/utils/helper-functions'
 type ComplaintValues = {
   category: string
   faculty: string
-  department?: string
+  department: string
   title: string
   description: string
   resolutionType?: string
@@ -124,9 +124,7 @@ export function ComplaintForm() {
 
     const dbFaculty = facultyMap[data.faculty] || 'other'
     formData.append('faculty', dbFaculty)
-    if (data.department) {
-      formData.append('department', data.department)
-    }
+    formData.append('department', data.department)
 
     // Map the display values to database enum values
     const resolutionTypeMap: Record<string, string> = {
@@ -236,7 +234,7 @@ export function ComplaintForm() {
 
       {/* Department Selection */}
       <div className="flex flex-col gap-2">
-        <Label className="font-medium text-gray-700">Department (Optional)</Label>
+        <Label className="font-medium text-gray-700">Department *</Label>
 
         <Controller
           name="department"
