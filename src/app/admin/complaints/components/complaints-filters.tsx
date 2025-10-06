@@ -32,7 +32,7 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [feedbackFilter, setFeedbackFilter] = useState('all')
-  const [sensitiveFilter, setSensitiveFilter] = useState('all')
+  const [sensitiveFilter, setSensitiveFilter] = useState('sensitive')
   const [orderBy, setOrderBy] = useState('sensitive-first')
 
   const filteredComplaints = useMemo(() => {
