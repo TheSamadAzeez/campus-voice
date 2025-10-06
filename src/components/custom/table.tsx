@@ -17,6 +17,7 @@ interface COMPLAINT {
   resolutionType: (typeof resolutionTypeEnum.enumValues)[number]
   status: (typeof complaintStatusEnum.enumValues)[number]
   priority: (typeof priorityEnum.enumValues)[number]
+  sensitive: boolean
   createdAt: Date | string
   hasFeedback?: boolean
 }
@@ -25,11 +26,15 @@ export function TableComponent({
   data,
   dashboard = false,
   admin = false,
+  userRole,
 }: {
   data: COMPLAINT[]
   dashboard?: boolean
   admin?: boolean
+  userRole?: 'admin' | 'student' | 'department-admin'
 }) {
+  // Don't display faculty column if user is department admin
+  const showFacultyColumn = userRole !== 'department-admin' && data.length > 0 && data[0].faculty
   return (
     <Card>
       <CardHeader>
@@ -45,9 +50,10 @@ export function TableComponent({
               <TableRow>
                 <TableHead>Title</TableHead>
                 <TableHead>Category</TableHead>
-                {data.length > 0 && data[0].faculty ? <TableHead>Faculty</TableHead> : null}
+                {showFacultyColumn ? <TableHead>Faculty</TableHead> : null}
                 <TableHead>Status</TableHead>
                 <TableHead>Priority</TableHead>
+                {userRole === 'admin' && <TableHead>Sensitive</TableHead>}
                 {admin && <TableHead>Feedback</TableHead>}
                 <TableHead>Date Submitted</TableHead>
                 <TableHead className="flex justify-center">Actions</TableHead>
@@ -60,7 +66,7 @@ export function TableComponent({
                     {complaint.title.length > 50 ? complaint.title.slice(0, 50) + '...' : complaint.title}
                   </TableCell>
                   <TableCell className="capitalize">{complaint.category}</TableCell>
-                  {data[0]?.faculty ? <TableCell className="capitalize">{complaint.faculty}</TableCell> : null}
+                  {showFacultyColumn ? <TableCell className="capitalize">{complaint.faculty}</TableCell> : null}
                   <TableCell>
                     <Badge variant={'outline'} className={getStatusColor(complaint.status.toLowerCase())}>
                       {complaint.status.toLowerCase()}
@@ -71,6 +77,19 @@ export function TableComponent({
                       {complaint.priority.toLowerCase()}
                     </Badge>
                   </TableCell>
+                  {userRole === 'admin' && (
+                    <TableCell>
+                      {complaint.sensitive ? (
+                        <Badge variant="destructive" className="text-xs">
+                          Sensitive
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs text-gray-400">
+                          Regular
+                        </Badge>
+                      )}
+                    </TableCell>
+                  )}
                   {admin && (
                     <TableCell>
                       {complaint.hasFeedback ? (
