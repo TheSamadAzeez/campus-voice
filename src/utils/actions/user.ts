@@ -102,6 +102,32 @@ export async function updateUserRole(
       if (!departmentInfo || !departmentInfo.faculty || !departmentInfo.department) {
         return { success: false, error: 'Department and faculty are required for department-admin role' }
       }
+
+      // Check if department is already assigned to another user
+      const { db } = await import('@/db/schema')
+      const { users } = await import('@/db/schema')
+      const { eq, and, ne } = await import('drizzle-orm')
+
+      const existingDepartmentAdmin = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.role, 'department-admin'),
+            eq(users.faculty, departmentInfo.faculty),
+            eq(users.department, departmentInfo.department),
+            ne(users.id, userId), // Exclude the current user being updated
+          ),
+        )
+        .limit(1)
+
+      if (existingDepartmentAdmin.length > 0) {
+        const adminName = `${existingDepartmentAdmin[0].firstName} ${existingDepartmentAdmin[0].lastName}`
+        return {
+          success: false,
+          error: `This department is already assigned to ${adminName}. Please choose a different department or remove the existing assignment first.`,
+        }
+      }
     }
 
     const { clerkClient } = await import('@clerk/nextjs/server')
