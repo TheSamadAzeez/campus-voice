@@ -5,7 +5,17 @@ const CATEGORIES = [
   'harassment',
   'infrastructure',
   'result',
+  'sensitive',
   'other',
+] as const
+
+const SENSITIVE_TYPES = [
+  'Staff Misconduct',
+  'Sexual Harassment',
+  'Bullying',
+  'Discrimination',
+  'Abuse of Power',
+  'Other Sensitive Matter',
 ] as const
 
 const RESOLUTION_TYPES = [
@@ -91,4 +101,4 @@ const DEPARTMENTS = {
   Other: ['General Studies', 'Inter-disciplinary Studies'],
 } as const
 
-export { CATEGORIES, RESOLUTION_TYPES, FACULTIES, DEPARTMENTS }
+export { CATEGORIES, SENSITIVE_TYPES, RESOLUTION_TYPES, FACULTIES, DEPARTMENTS }

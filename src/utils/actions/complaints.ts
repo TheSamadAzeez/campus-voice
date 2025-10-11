@@ -22,10 +22,14 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
     const title = complaintData.get('title') as string
     const description = complaintData.get('description') as string
     const category = complaintData.get('category') as string
+    const sensitiveType = complaintData.get('sensitiveType') as string | null
     const faculty = complaintData.get('faculty') as string
     const department = (complaintData.get('department') as string) || 'General' // Default department if not specified
     const resolutionType = complaintData.get('resolutionType') as string
     const { userId } = await authUser() // Get userId from session
+
+    // Check if this is a sensitive complaint
+    const isSensitive = category === 'sensitive'
 
     // Collect all file data
     const fileDataArray: Array<{
@@ -63,6 +67,10 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
         faculty: faculty as any,
         department,
         resolutionType: resolutionType as any,
+        // Automatically set high priority and sensitive flag for sensitive complaints
+        priority: isSensitive ? 'high' : 'normal',
+        sensitive: isSensitive,
+        sensitiveType: isSensitive && sensitiveType ? sensitiveType : null,
       }
 
       const [complaint] = await tx.insert(complaints).values(newComplaintData).returning()

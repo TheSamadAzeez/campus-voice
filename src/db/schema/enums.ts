@@ -9,6 +9,7 @@ export const complaintCategoryEnum = pgEnum('complaint_category', [
   'harassment',
   'infrastructure',
   'result',
+  'sensitive',
   'other',
 ])
 export const facultyEnum = pgEnum('faculty', [

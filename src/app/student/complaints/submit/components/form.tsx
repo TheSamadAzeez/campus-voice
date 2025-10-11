@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
-import { CATEGORIES, FACULTIES, DEPARTMENTS, RESOLUTION_TYPES } from '../enums'
+import { CATEGORIES, SENSITIVE_TYPES, FACULTIES, DEPARTMENTS, RESOLUTION_TYPES } from '../enums'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, Controller } from 'react-hook-form'
 import { CldUploadButton } from 'next-cloudinary'
@@ -18,6 +18,7 @@ import { deleteFromCloudinary } from '@/utils/helper-functions'
 
 type ComplaintValues = {
   category: string
+  sensitiveType?: string
   faculty: string
   department: string
   title: string
@@ -28,6 +29,7 @@ type ComplaintValues = {
 export function ComplaintForm() {
   const [fileData, setFileData] = useState<any[]>([])
   const [selectedFaculty, setSelectedFaculty] = useState<string>('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [optimisticFileData, updateOptimisticFileData] = useOptimistic(
     fileData,
     (state, action: { type: 'remove'; index: number }) => {
@@ -111,6 +113,11 @@ export function ComplaintForm() {
     formData.append('description', data.description)
     formData.append('category', data.category.toLowerCase())
 
+    // Add sensitive type if category is sensitive
+    if (data.category === 'sensitive' && data.sensitiveType) {
+      formData.append('sensitiveType', data.sensitiveType)
+    }
+
     // Map faculty values to database enum values
     const facultyMap: Record<string, string> = {
       Science: 'science',
@@ -182,7 +189,17 @@ export function ComplaintForm() {
           name="category"
           control={control}
           render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
+            <Select
+              onValueChange={(value) => {
+                field.onChange(value)
+                setSelectedCategory(value)
+                // Reset sensitive type when category changes
+                if (value !== 'sensitive') {
+                  form.setValue('sensitiveType', '')
+                }
+              }}
+              value={field.value}
+            >
               <SelectTrigger id="category" className="w-full">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
@@ -198,6 +215,33 @@ export function ComplaintForm() {
         />
         <p className="text-xs text-red-600">{errors.category?.message}</p>
       </div>
+
+      {/* Sensitive Type Selection - Only show when category is 'sensitive' */}
+      {selectedCategory === 'sensitive' && (
+        <div className="flex flex-col gap-2">
+          <Label className="font-medium text-gray-700">Sensitive Complaint Type *</Label>
+          <Controller
+            name="sensitiveType"
+            control={control}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger id="sensitiveType" className="w-full">
+                  <SelectValue placeholder="Select the type of sensitive complaint" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SENSITIVE_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          <p className="text-xs text-red-600">{errors.sensitiveType?.message}</p>
+          <p className="text-xs text-amber-600">⚠️ Sensitive complaints are automatically marked as high priority</p>
+        </div>
+      )}
 
       {/* Faculty Selection */}
       <div className="flex flex-col gap-2">
