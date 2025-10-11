@@ -53,11 +53,14 @@ export async function provideFeedback(feedbackText: string, rating: number, comp
     })
 
     // Notify admins about the feedback
+    // If complaint is sensitive, only admins get notified
     await createAdminNotification({
       complaintId: complaintId,
       title: 'New Feedback Received',
       message: `Feedback with ${rating}/5 stars has been submitted for complaint "${complaint.title}".`,
       type: 'feedback_request',
+      isSensitive: complaint.sensitive,
+      department: complaint.department,
     })
 
     // Revalidate pages
