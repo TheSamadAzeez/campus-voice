@@ -111,12 +111,52 @@ export async function createAdminNotification(data: {
   title: string
   message: string
   type: 'status_change' | 'priority_change' | 'new_complaint' | 'feedback_request' | 'system'
+  isSensitive?: boolean
+  department?: string
 }) {
   try {
-    // Get all admin users
+    // If sensitive complaint, notify only admins
+    if (data.isSensitive) {
+      const adminUsers = await db.select({ id: users.id }).from(users).where(eq(users.role, 'admin'))
+
+      const notificationPromises = adminUsers.map((admin) =>
+        db.insert(notifications).values({
+          userId: admin.id,
+          complaintId: data.complaintId,
+          title: data.title,
+          message: data.message,
+          type: data.type,
+        }),
+      )
+
+      await Promise.all(notificationPromises)
+      return { success: true }
+    }
+
+    // If not sensitive and department is provided, notify department admins for that department
+    if (data.department) {
+      const departmentAdmins = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.role, 'department-admin'), eq(users.department, data.department)))
+
+      const notificationPromises = departmentAdmins.map((admin) =>
+        db.insert(notifications).values({
+          userId: admin.id,
+          complaintId: data.complaintId,
+          title: data.title,
+          message: data.message,
+          type: data.type,
+        }),
+      )
+
+      await Promise.all(notificationPromises)
+      return { success: true }
+    }
+
+    // Fallback: notify all admins (shouldn't normally happen with proper data)
     const adminUsers = await db.select({ id: users.id }).from(users).where(eq(users.role, 'admin'))
 
-    // Create notifications for all admins
     const notificationPromises = adminUsers.map((admin) =>
       db.insert(notifications).values({
         userId: admin.id,

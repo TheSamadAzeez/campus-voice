@@ -120,12 +120,14 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
       type: 'new_complaint',
     })
 
-    // Notify all admins about the new complaint
+    // Notify appropriate admins about the new complaint based on sensitivity
     await createAdminNotification({
       complaintId: result.id,
       title: 'New Complaint Submitted',
       message: `A new complaint "${title}" has been submitted by a student in the ${faculty} faculty and requires review.`,
       type: 'new_complaint',
+      isSensitive: isSensitive,
+      department: !isSensitive ? department : undefined,
     })
 
     return { success: true, complaint: result }
