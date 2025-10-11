@@ -686,13 +686,11 @@ export async function getAllComplaintChartData() {
       const facultyColorMap: Record<string, string> = {
         science: '#3b82f6', // Blue
         law: '#dc2626', // Red
-        arts: '#059669', // Green
+        art: '#059669', // Green
         education: '#d97706', // Orange
-        'management science': '#7c3aed', // Purple
+        'management science': '#f97316', // Orange
         transport: '#0891b2', // Cyan
-        engineering: '#f59e0b', // Amber
-        medicine: '#10b981', // Emerald
-        agriculture: '#8b5cf6', // Violet
+        computing: '#7c3aed', // Purple
         other: '#4b5563', // Gray (fallback)
       }
 
