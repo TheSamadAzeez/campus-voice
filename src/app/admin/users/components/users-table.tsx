@@ -21,6 +21,7 @@ type SerializedUser = {
   publicMetadata: Record<string, any>
   createdAt: number
   updatedAt: number
+  unsafeMetadata?: Record<string, any>
 }
 
 interface UsersTableProps {
@@ -30,8 +31,17 @@ interface UsersTableProps {
 export function UsersTable({ users }: UsersTableProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
+  const [departmentFilter, setDepartmentFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<string>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+
+  // Get unique departments from users
+  const uniqueDepartments = useMemo(() => {
+    const departments = users
+      .map((user) => (user.publicMetadata?.department as string) || '')
+      .filter((dept) => dept !== '')
+    return Array.from(new Set(departments)).sort()
+  }, [users])
 
   const filteredAndSortedUsers = useMemo(() => {
     const filtered = users.filter((user: SerializedUser) => {
@@ -40,18 +50,23 @@ export function UsersTable({ users }: UsersTableProps) {
       const fullName = `${firstName} ${lastName}`.toLowerCase()
       const email = user.emailAddresses[0]?.emailAddress?.toLowerCase() || ''
       const role = (user.publicMetadata?.role as string) || 'student'
+      const department = (user.publicMetadata?.department as string) || ''
 
       // Search filter
       const matchesSearch =
         searchQuery === '' ||
         fullName.includes(searchQuery.toLowerCase()) ||
         email.includes(searchQuery.toLowerCase()) ||
-        user.id.toLowerCase().includes(searchQuery.toLowerCase())
+        user.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        department.toLowerCase().includes(searchQuery.toLowerCase())
 
       // Role filter
       const matchesRole = roleFilter === 'all' || role === roleFilter
 
-      return matchesSearch && matchesRole
+      // Department filter
+      const matchesDepartment = departmentFilter === 'all' || department === departmentFilter
+
+      return matchesSearch && matchesRole && matchesDepartment
     })
 
     // Sort the filtered results
@@ -72,6 +87,10 @@ export function UsersTable({ users }: UsersTableProps) {
           aValue = (a.publicMetadata?.role as string) || 'student'
           bValue = (b.publicMetadata?.role as string) || 'student'
           break
+        case 'department':
+          aValue = (a.publicMetadata?.department as string) || ''
+          bValue = (b.publicMetadata?.department as string) || ''
+          break
         case 'created':
           aValue = new Date(a.createdAt)
           bValue = new Date(b.createdAt)
@@ -91,7 +110,7 @@ export function UsersTable({ users }: UsersTableProps) {
     })
 
     return filtered
-  }, [users, searchQuery, roleFilter, sortBy, sortOrder])
+  }, [users, searchQuery, roleFilter, departmentFilter, sortBy, sortOrder])
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -142,6 +161,21 @@ export function UsersTable({ users }: UsersTableProps) {
             </SelectContent>
           </Select>
 
+          <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <Filter className="h-4 w-4" />
+              <SelectValue placeholder="Filter by department" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Departments</SelectItem>
+              {uniqueDepartments.map((dept) => (
+                <SelectItem key={dept} value={dept}>
+                  {dept}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-full sm:w-[160px]">
               <SelectValue placeholder="Sort by" />
@@ -150,6 +184,7 @@ export function UsersTable({ users }: UsersTableProps) {
               <SelectItem value="name">Name</SelectItem>
               <SelectItem value="email">Email</SelectItem>
               <SelectItem value="role">Role</SelectItem>
+              <SelectItem value="department">Department</SelectItem>
               <SelectItem value="created">Date Created</SelectItem>
               <SelectItem value="updated">Date Updated</SelectItem>
             </SelectContent>
@@ -185,6 +220,15 @@ export function UsersTable({ users }: UsersTableProps) {
                 </TableHead>
                 <TableHead
                   className="hover:bg-muted/50 cursor-pointer select-none"
+                  onClick={() => handleSort('department')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Department</span>
+                    <span className="text-xs">{getSortIcon('department')}</span>
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="hover:bg-muted/50 cursor-pointer select-none"
                   onClick={() => handleSort('created')}
                 >
                   <div className="flex items-center space-x-1">
@@ -210,6 +254,7 @@ export function UsersTable({ users }: UsersTableProps) {
                 const lastName = user.lastName || 'User'
                 const email = user.emailAddresses[0]?.emailAddress || 'No email'
                 const role = (user.publicMetadata?.role as string) || 'student'
+                const department = (user.publicMetadata?.department as string) || ''
                 const profileImage = user.imageUrl || ''
 
                 const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
@@ -248,6 +293,11 @@ export function UsersTable({ users }: UsersTableProps) {
                       >
                         {role}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm">
+                        {department || (role === 'department-admin' ? 'Not assigned' : '—')}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -293,13 +343,16 @@ export function UsersTable({ users }: UsersTableProps) {
             <div className="py-8 text-center">
               <Users className="text-muted-foreground mx-auto h-12 w-12" />
               <p className="text-muted-foreground mt-2">
-                {searchQuery || roleFilter !== 'all' ? 'No users match your filters' : 'No users found'}
+                {searchQuery || roleFilter !== 'all' || departmentFilter !== 'all'
+                  ? 'No users match your filters'
+                  : 'No users found'}
               </p>
-              {(searchQuery || roleFilter !== 'all') && (
+              {(searchQuery || roleFilter !== 'all' || departmentFilter !== 'all') && (
                 <button
                   onClick={() => {
                     setSearchQuery('')
                     setRoleFilter('all')
+                    setDepartmentFilter('all')
                   }}
                   className="text-primary mt-2 text-sm hover:underline"
                 >
