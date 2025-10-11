@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { getStatusColor, getStatusUpdateColor, getPriorityStatusUpdateColor } from '@/utils/status'
-import { Clock, FileText, GraduationCap, MessageSquare } from 'lucide-react'
+import { BookMarked, Clock, FileText, GraduationCap, MessageSquare } from 'lucide-react'
 import { getComplaintById } from '@/utils/actions/complaints'
 import { StatusButton } from './statusButton'
 import { FeedbackForm } from './feedback-form'
@@ -71,7 +71,7 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="flex w-75 items-center justify-between">
+              <div className="flex items-center gap-6">
                 <div>
                   <h3 className="mb-2 flex items-center gap-2 font-semibold">
                     <FileText className="size-4" />
@@ -89,6 +89,16 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
                   </h3>
                   <Badge variant="outline" className="px-3 py-1 text-sm capitalize">
                     {complaintData.faculty}
+                  </Badge>
+                </div>
+
+                <div>
+                  <h3 className="mb-2 flex items-center gap-2 font-semibold">
+                    <BookMarked className="size-4" />
+                    Department
+                  </h3>
+                  <Badge variant="outline" className="px-3 py-1 text-sm capitalize">
+                    {complaintData.department}
                   </Badge>
                 </div>
               </div>
