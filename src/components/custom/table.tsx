@@ -110,7 +110,15 @@ export function TableComponent({
                       : complaint.createdAt.toLocaleDateString()}
                   </TableCell>
                   <TableCell className="flex justify-center">
-                    <Link href={admin ? `/admin/complaints/${complaint.id}` : `/student/complaints/${complaint.id}`}>
+                    <Link
+                      href={
+                        userRole === 'department-admin' && admin
+                          ? `/department/complaints/${complaint.id}`
+                          : admin
+                            ? `/admin/complaints/${complaint.id}`
+                            : `/student/complaints/${complaint.id}`
+                      }
+                    >
                       <Eye className="size-4" color="#f66426" strokeWidth={2} />
                     </Link>
                   </TableCell>
