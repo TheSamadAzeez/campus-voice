@@ -126,6 +126,7 @@ export function ComplaintForm() {
       Law: 'law',
       Transport: 'transport',
       Education: 'education',
+      Computing: 'computing',
       Other: 'other',
     }
 

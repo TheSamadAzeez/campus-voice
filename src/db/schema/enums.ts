@@ -14,11 +14,12 @@ export const complaintCategoryEnum = pgEnum('complaint_category', [
 ])
 export const facultyEnum = pgEnum('faculty', [
   'science',
-  'transport',
-  'law',
-  'art',
-  'education',
   'management science',
+  'art',
+  'law',
+  'transport',
+  'education',
+  'computing',
   'other',
 ])
 export const resolutionTypeEnum = pgEnum('resolution_type', [
