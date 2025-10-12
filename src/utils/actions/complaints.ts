@@ -22,10 +22,14 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
     const title = complaintData.get('title') as string
     const description = complaintData.get('description') as string
     const category = complaintData.get('category') as string
+    const sensitiveType = complaintData.get('sensitiveType') as string | null
     const faculty = complaintData.get('faculty') as string
     const department = (complaintData.get('department') as string) || 'General' // Default department if not specified
     const resolutionType = complaintData.get('resolutionType') as string
     const { userId } = await authUser() // Get userId from session
+
+    // Check if this is a sensitive complaint
+    const isSensitive = category === 'sensitive'
 
     // Collect all file data
     const fileDataArray: Array<{
@@ -63,6 +67,10 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
         faculty: faculty as any,
         department,
         resolutionType: resolutionType as any,
+        // Automatically set high priority and sensitive flag for sensitive complaints
+        priority: isSensitive ? 'high' : 'normal',
+        sensitive: isSensitive,
+        sensitiveType: isSensitive && sensitiveType ? sensitiveType : null,
       }
 
       const [complaint] = await tx.insert(complaints).values(newComplaintData).returning()
@@ -112,12 +120,14 @@ export async function createComplaintWithAttachment(complaintData: FormData) {
       type: 'new_complaint',
     })
 
-    // Notify all admins about the new complaint
+    // Notify appropriate admins about the new complaint based on sensitivity
     await createAdminNotification({
       complaintId: result.id,
       title: 'New Complaint Submitted',
       message: `A new complaint "${title}" has been submitted by a student in the ${faculty} faculty and requires review.`,
       type: 'new_complaint',
+      isSensitive: isSensitive,
+      department: !isSensitive ? department : undefined,
     })
 
     return { success: true, complaint: result }
@@ -676,13 +686,11 @@ export async function getAllComplaintChartData() {
       const facultyColorMap: Record<string, string> = {
         science: '#3b82f6', // Blue
         law: '#dc2626', // Red
-        arts: '#059669', // Green
+        art: '#059669', // Green
         education: '#d97706', // Orange
-        'management science': '#7c3aed', // Purple
+        'management science': '#f97316', // Orange
         transport: '#0891b2', // Cyan
-        engineering: '#f59e0b', // Amber
-        medicine: '#10b981', // Emerald
-        agriculture: '#8b5cf6', // Violet
+        computing: '#7c3aed', // Purple
         other: '#4b5563', // Gray (fallback)
       }
 

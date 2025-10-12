@@ -22,21 +22,25 @@ const chartConfig = {
     label: 'Law',
     color: '#dc2626',
   },
-  arts: {
-    label: 'Arts',
+  art: {
+    label: 'Art',
     color: '#059669',
   },
   education: {
     label: 'Education',
     color: '#d97706',
   },
-  management: {
+  'management science': {
     label: 'Management Science',
     color: '#7c3aed',
   },
   transport: {
     label: 'Transport',
     color: '#0891b2',
+  },
+  computing: {
+    label: 'Computing',
+    color: '#f97316',
   },
   other: {
     label: 'Other',

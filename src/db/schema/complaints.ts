@@ -17,6 +17,7 @@ export const complaints = pgTable('complaints', {
   status: complaintStatusEnum('status').default('pending').notNull(),
   priority: priorityEnum('priority').default('normal').notNull(),
   sensitive: boolean('sensitive').default(false).notNull(),
+  sensitiveType: varchar('sensitive_type', { length: 255 }),
   submittedAt: timestamp('submitted_at').defaultNow().notNull(),
   resolvedAt: timestamp('resolved_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

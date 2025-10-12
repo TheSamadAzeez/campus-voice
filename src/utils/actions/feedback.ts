@@ -1,8 +1,8 @@
 'use server'
 
 import { complaintFeedback, db, complaints, users } from '@/db/schema'
-import { authUser } from '../helper-functions'
-import { eq, desc, sql } from 'drizzle-orm'
+import { authUser, getDepartmentAdminDepartment } from '../helper-functions'
+import { eq, desc, sql, and } from 'drizzle-orm'
 import { createAdminNotification } from './notifications'
 import { revalidatePath } from 'next/cache'
 
@@ -53,11 +53,14 @@ export async function provideFeedback(feedbackText: string, rating: number, comp
     })
 
     // Notify admins about the feedback
+    // If complaint is sensitive, only admins get notified
     await createAdminNotification({
       complaintId: complaintId,
       title: 'New Feedback Received',
       message: `Feedback with ${rating}/5 stars has been submitted for complaint "${complaint.title}".`,
       type: 'feedback_request',
+      isSensitive: complaint.sensitive,
+      department: complaint.department,
     })
 
     // Revalidate pages
@@ -106,10 +109,36 @@ export async function getAllFeedback() {
   try {
     const user = await authUser()
 
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'department-admin')) {
       return { success: false, error: 'You are not authorized for this action' }
     }
 
+    // If department admin, get their department and filter feedback accordingly
+    if (user.role === 'department-admin') {
+      const departmentResult = await getDepartmentAdminDepartment()
+
+      if (!departmentResult.success || !departmentResult.department) {
+        return { success: false, error: departmentResult.error || 'Failed to get department information' }
+      }
+
+      // Get feedback filtered by department
+      const feedbacks = await db
+        .select({
+          id: complaintFeedback.id,
+          complaintId: complaintFeedback.complaintId,
+          userId: complaintFeedback.userId,
+          rating: complaintFeedback.rating,
+          feedbackText: complaintFeedback.feedbackText,
+          submittedAt: complaintFeedback.submittedAt,
+        })
+        .from(complaintFeedback)
+        .innerJoin(complaints, eq(complaintFeedback.complaintId, complaints.id))
+        .where(eq(complaints.department, departmentResult.department))
+
+      return { success: true, data: feedbacks }
+    }
+
+    // Admin can see all feedback
     const feedbacks = await db.select().from(complaintFeedback)
     return { success: true, data: feedbacks }
   } catch (error) {
@@ -122,12 +151,24 @@ export async function getFeedbackStats() {
   try {
     const user = await authUser()
 
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'department-admin')) {
       return { success: false, error: 'You are not authorized for this action' }
     }
 
-    // Get all feedback with complaint details
-    const feedbackWithComplaints = await db
+    // If department admin, get their department and filter feedback accordingly
+    let departmentFilter: string | null = null
+    if (user.role === 'department-admin') {
+      const departmentResult = await getDepartmentAdminDepartment()
+
+      if (!departmentResult.success || !departmentResult.department) {
+        return { success: false, error: departmentResult.error || 'Failed to get department information' }
+      }
+
+      departmentFilter = departmentResult.department
+    }
+
+    // Get all feedback with complaint details (filtered by department if applicable)
+    const feedbackQuery = db
       .select({
         id: complaintFeedback.id,
         rating: complaintFeedback.rating,
@@ -139,17 +180,24 @@ export async function getFeedbackStats() {
         studentName: users.firstName,
         studentLastName: users.lastName,
         faculty: complaints.faculty,
+        department: complaints.department,
       })
       .from(complaintFeedback)
       .innerJoin(complaints, eq(complaintFeedback.complaintId, complaints.id))
       .innerJoin(users, eq(complaints.userId, users.id))
-      .orderBy(desc(complaintFeedback.submittedAt))
 
-    // Get total resolved complaints
-    const [totalResolvedResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(complaints)
-      .where(eq(complaints.status, 'resolved'))
+    const feedbackWithComplaints = departmentFilter
+      ? await feedbackQuery
+          .where(eq(complaints.department, departmentFilter))
+          .orderBy(desc(complaintFeedback.submittedAt))
+      : await feedbackQuery.orderBy(desc(complaintFeedback.submittedAt))
+
+    // Get total resolved complaints (filtered by department if applicable)
+    const resolvedQuery = db.select({ count: sql<number>`count(*)` }).from(complaints)
+
+    const [totalResolvedResult] = departmentFilter
+      ? await resolvedQuery.where(and(eq(complaints.status, 'resolved'), eq(complaints.department, departmentFilter)))
+      : await resolvedQuery.where(eq(complaints.status, 'resolved'))
 
     const totalFeedback = feedbackWithComplaints.length
     const totalResolved = totalResolvedResult.count
