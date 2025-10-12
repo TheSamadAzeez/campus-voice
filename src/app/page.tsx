@@ -220,7 +220,7 @@ export default function Home() {
             <div className="flex items-center gap-4">
               <Logo className="h-8 w-auto" />
               <div className="text-sm text-gray-600">
-                © 2024 Campus Voice. Making education better, one complaint at a time.
+                © 2025 Campus Voice. Making education better, one complaint at a time.
               </div>
             </div>
             <div className="flex items-center gap-6">
@@ -229,9 +229,6 @@ export default function Home() {
               </Link>
               <Link href="/admin" className="text-sm text-gray-600 transition-colors hover:text-gray-900">
                 Admin Portal
-              </Link>
-              <Link href="/(landing)/about" className="text-sm text-gray-600 transition-colors hover:text-gray-900">
-                About
               </Link>
             </div>
           </div>
