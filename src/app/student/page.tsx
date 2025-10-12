@@ -22,7 +22,7 @@ export default async function StudentPage() {
         <ChartAreaGradient data={dashboardData?.chart?.data || []} />
       </div>
       {/* Recent Activities */}
-      <TableComponent data={dashboardData.complaints.data || []} dashboard />
+      <TableComponent data={dashboardData.complaints.data || []} dashboard userRole="student" />
     </div>
   )
 }

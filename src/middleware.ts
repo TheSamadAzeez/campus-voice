@@ -3,29 +3,59 @@ import { NextResponse } from 'next/server'
 
 const isPublicRoute = createRouteMatcher(['/', '/api/webhooks(.*)'])
 const isAdminRoute = createRouteMatcher(['/admin(.*)'])
+const isDepartmentRoute = createRouteMatcher(['/department(.*)'])
+const isStudentRoute = createRouteMatcher(['/student(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth()
-  const isAdmin = sessionClaims?.metadata?.role === 'admin'
+  // Handle public routes first - allow everyone to access these
+  if (isPublicRoute(req)) {
+    return
+  }
 
-  // Handle admin routes
+  // Protect all non-public routes
+  const { userId, sessionClaims } = await auth()
+
+  // If no user, protect the route (this will redirect to sign-in)
+  if (!userId) {
+    await auth.protect()
+    return
+  }
+
+  // Get user role from session claims - default to 'student' if not set
+  const userRole = (sessionClaims?.metadata?.role as 'admin' | 'department-admin' | 'student') || 'student'
+
+  // Handle admin routes - only allow admin role
   if (isAdminRoute(req)) {
-    if (!isAdmin) {
-      // Redirect non-admin users trying to access admin routes to student dashboard
-      return NextResponse.redirect(new URL('/student', req.url))
+    if (userRole !== 'admin') {
+      // Redirect based on their actual role
+      const redirectPath = userRole === 'department-admin' ? '/department' : '/student'
+      return NextResponse.redirect(new URL(redirectPath, req.url))
     }
     return
   }
 
-  // Handle non-admin routes for admin users (except public routes)
-  if (isAdmin && !isAdminRoute(req) && !isPublicRoute(req)) {
-    return NextResponse.redirect(new URL('/admin', req.url))
+  // Handle department routes - only allow department-admin role
+  if (isDepartmentRoute(req)) {
+    if (userRole !== 'department-admin') {
+      // Redirect based on their actual role
+      const redirectPath = userRole === 'admin' ? '/admin' : '/student'
+      return NextResponse.redirect(new URL(redirectPath, req.url))
+    }
+    return
   }
 
-  // Protect non-public routes
-  if (!isPublicRoute(req) && !userId) {
-    await auth.protect()
+  // Handle student routes - only allow student role
+  if (isStudentRoute(req)) {
+    if (userRole !== 'student') {
+      // Redirect based on their actual role
+      const redirectPath = userRole === 'admin' ? '/admin' : '/department'
+      return NextResponse.redirect(new URL(redirectPath, req.url))
+    }
+    return
   }
+
+  // Allow all other authenticated routes (profile, etc.)
+  return
 })
 
 export const config = {

@@ -1,4 +1,4 @@
-import { Bell, LayoutDashboard, LucideIcon, MessageSquare, NotebookPen, NotepadText } from 'lucide-react'
+import { Bell, LayoutDashboard, LucideIcon, MessageSquare, NotebookPen, NotepadText, UsersRound } from 'lucide-react'
 
 interface NavLink {
   label: string
@@ -46,8 +46,41 @@ export const adminLinks: NavLink[] = [
     icon: MessageSquare,
   },
   {
+    label: 'Users',
+    href: '/admin/users',
+    icon: UsersRound,
+  },
+  {
     label: 'Notifications',
     href: '/admin/notifications',
+    icon: Bell,
+  },
+]
+
+export const departmentAdminLinks: NavLink[] = [
+  {
+    label: 'Dashboard',
+    href: '/department',
+    icon: LayoutDashboard,
+  },
+  {
+    label: 'All Complaints',
+    href: '/department/complaints',
+    icon: NotepadText,
+  },
+  {
+    label: 'Feedback',
+    href: '/department/feedback',
+    icon: MessageSquare,
+  },
+  // {
+  //   label: 'Users',
+  //   href: '/department/users',
+  //   icon: UsersRound,
+  // },
+  {
+    label: 'Notifications',
+    href: '/department/notifications',
     icon: Bell,
   },
 ]

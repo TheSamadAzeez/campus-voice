@@ -1,7 +1,7 @@
 import { pgEnum } from 'drizzle-orm/pg-core'
 
 // schema/enums.ts
-export const userRoleEnum = pgEnum('user_role', ['student', 'admin'])
+export const userRoleEnum = pgEnum('user_role', ['student', 'department-admin', 'admin'])
 export const complaintCategoryEnum = pgEnum('complaint_category', [
   'academic',
   'facility',
