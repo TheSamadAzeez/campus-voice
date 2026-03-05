@@ -1,49 +1,30 @@
 'use server'
 
-import { db, NewUser, users } from '@/db/schema/index'
 import { authUser } from '../helper-functions'
-import { eq } from 'drizzle-orm'
 
 /** USER */
-
-export async function createUser(user: NewUser) {
-  try {
-    await db.insert(users).values({ ...user })
-    return { success: true, error: 'User created successfully' }
-  } catch (error) {
-    console.error('Error creating user', error)
-    return { success: false, error: 'Failed to create user' }
-  }
-}
-
-export async function updateUser(user: NewUser) {
-  try {
-    await db
-      .update(users)
-      .set({ ...user })
-      .where(eq(users.id, user.id))
-    return { success: true, error: 'User updated successfully' }
-  } catch (error) {
-    console.error('Error updating user', error)
-    return { success: false, error: 'Failed to update user' }
-  }
-}
-
-export async function deleteUser(userId: string) {
-  try {
-    await db.delete(users).where(eq(users.id, userId))
-    return { success: true, error: 'User deleted successfully' }
-  } catch (error) {
-    console.error('Error deleting user', error)
-    return { success: false, error: 'Failed to delete user' }
-  }
-}
 
 export async function getUser() {
   try {
     const { userId } = await authUser()
-    const user = await db.select().from(users).where(eq(users.id, userId))
-    return { success: true, user: user[0] }
+    const { clerkClient } = await import('@clerk/nextjs/server')
+    const client = await clerkClient()
+    const clerkUser = await client.users.getUser(userId)
+
+    const user = {
+      id: clerkUser.id,
+      email: clerkUser.emailAddresses[0]?.emailAddress || '',
+      firstName: clerkUser.firstName || '',
+      lastName: clerkUser.lastName || '',
+      profileImage: clerkUser.imageUrl,
+      role: (clerkUser.publicMetadata?.role as string) || 'student',
+      faculty: (clerkUser.publicMetadata?.faculty as string) || null,
+      department: (clerkUser.publicMetadata?.department as string) || null,
+      createdAt: new Date(clerkUser.createdAt),
+      updatedAt: new Date(clerkUser.updatedAt),
+    }
+
+    return { success: true, user }
   } catch (error) {
     console.error('Error getting user', error)
     return { success: false, error: 'Unable to find user' }
@@ -104,25 +85,20 @@ export async function updateUserRole(
       }
 
       // Check if department is already assigned to another user
-      const { db } = await import('@/db/schema')
-      const { users } = await import('@/db/schema')
-      const { eq, and, ne } = await import('drizzle-orm')
+      const { clerkClient } = await import('@clerk/nextjs/server')
+      const client = await clerkClient()
+      const allUsers = await client.users.getUserList()
 
-      const existingDepartmentAdmin = await db
-        .select()
-        .from(users)
-        .where(
-          and(
-            eq(users.role, 'department-admin'),
-            eq(users.faculty, departmentInfo.faculty),
-            eq(users.department, departmentInfo.department),
-            ne(users.id, userId), // Exclude the current user being updated
-          ),
-        )
-        .limit(1)
+      const existingDepartmentAdmin = allUsers.data.find(
+        (u) =>
+          u.publicMetadata?.role === 'department-admin' &&
+          u.publicMetadata?.faculty === departmentInfo.faculty &&
+          u.publicMetadata?.department === departmentInfo.department &&
+          u.id !== userId,
+      )
 
-      if (existingDepartmentAdmin.length > 0) {
-        const adminName = `${existingDepartmentAdmin[0].firstName} ${existingDepartmentAdmin[0].lastName}`
+      if (existingDepartmentAdmin) {
+        const adminName = `${existingDepartmentAdmin.firstName || 'Unknown'} ${existingDepartmentAdmin.lastName || 'User'}`
         return {
           success: false,
           error: `This department is already assigned to ${adminName}. Please choose a different department or remove the existing assignment first.`,
@@ -146,21 +122,6 @@ export async function updateUserRole(
     await client.users.updateUserMetadata(userId, {
       publicMetadata: metadata,
     })
-
-    // Update user in database
-    const { db } = await import('@/db/schema')
-    const { users } = await import('@/db/schema')
-    const { eq } = await import('drizzle-orm')
-
-    await db
-      .update(users)
-      .set({
-        role: newRole,
-        faculty: newRole === 'department-admin' && departmentInfo ? departmentInfo.faculty : null,
-        department: newRole === 'department-admin' && departmentInfo ? departmentInfo.department : null,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId))
 
     // Revalidate the users page to reflect changes
     const { revalidatePath } = await import('next/cache')
@@ -196,19 +157,11 @@ export async function deleteUserFromClerk(userId: string) {
     // Delete user from Clerk
     await client.users.deleteUser(userId)
 
-    // Also delete from local database if exists
-    try {
-      await db.delete(users).where(eq(users.id, userId))
-    } catch (dbError) {
-      // Local DB deletion is optional, don't fail if user doesn't exist locally
-      console.warn('User not found in local database:', dbError)
-    }
-
     // Revalidate the users page to reflect changes
     const { revalidatePath } = await import('next/cache')
     revalidatePath('/admin/users')
 
-    return { success: true, message: 'User deleted successfully from Clerk and local database' }
+    return { success: true, message: 'User deleted successfully from Clerk' }
   } catch (error) {
     console.error('Error deleting user from Clerk', error)
     return { success: false, error: 'Failed to delete user' }

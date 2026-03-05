@@ -1,16 +1,10 @@
 import { index } from 'drizzle-orm/pg-core'
-import { users } from './users'
 import { complaints } from './complaints'
 import { complaintStatusHistory } from './status-history'
 import { notifications } from './notifications'
 import { complaintAttachments } from './attachments'
 
 // schema/indexes.ts
-export const userIndexes = {
-  emailIdx: index('idx_users_email').on(users.email),
-  roleIdx: index('idx_users_role').on(users.role),
-}
-
 export const complaintIndexes = {
   userIdIdx: index('idx_complaints_user_id').on(complaints.userId),
   statusIdx: index('idx_complaints_status').on(complaints.status),

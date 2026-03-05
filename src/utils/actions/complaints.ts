@@ -7,7 +7,6 @@ import {
   complaintFeedback,
   db,
   NewComplaint,
-  users,
 } from '@/db/schema'
 import { authUser, deleteFromCloudinary, getDepartmentAdminDepartment } from '../helper-functions'
 import { and, count, desc, eq } from 'drizzle-orm'
@@ -749,7 +748,6 @@ export const getComplaintById = async (complaintId: string) => {
       db
         .select()
         .from(complaintStatusHistory)
-        .leftJoin(users, eq(complaintStatusHistory.changedBy, users.id))
         .where(eq(complaintStatusHistory.complaintId, complaintId))
         .orderBy(desc(complaintStatusHistory.changedAt)),
       // Fetch feedback data

@@ -1,6 +1,6 @@
 'use server'
 
-import { db, notifications, users } from '@/db/schema'
+import { db, notifications } from '@/db/schema'
 import { authUser } from '../helper-functions'
 import { eq, desc, and, count } from 'drizzle-orm'
 
@@ -115,9 +115,14 @@ export async function createAdminNotification(data: {
   department?: string
 }) {
   try {
+    const { clerkClient } = await import('@clerk/nextjs/server')
+    const client = await clerkClient()
+    const allUsers = await client.users.getUserList()
+    const allClerkUsers = allUsers.data
+
     // If sensitive complaint, notify only admins
     if (data.isSensitive) {
-      const adminUsers = await db.select({ id: users.id }).from(users).where(eq(users.role, 'admin'))
+      const adminUsers = allClerkUsers.filter((u) => u.publicMetadata?.role === 'admin')
 
       const notificationPromises = adminUsers.map((admin) =>
         db.insert(notifications).values({
@@ -135,10 +140,9 @@ export async function createAdminNotification(data: {
 
     // If not sensitive and department is provided, notify department admins for that department
     if (data.department) {
-      const departmentAdmins = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(and(eq(users.role, 'department-admin'), eq(users.department, data.department)))
+      const departmentAdmins = allClerkUsers.filter(
+        (u) => u.publicMetadata?.role === 'department-admin' && u.publicMetadata?.department === data.department,
+      )
 
       const notificationPromises = departmentAdmins.map((admin) =>
         db.insert(notifications).values({
@@ -155,7 +159,7 @@ export async function createAdminNotification(data: {
     }
 
     // Fallback: notify all admins (shouldn't normally happen with proper data)
-    const adminUsers = await db.select({ id: users.id }).from(users).where(eq(users.role, 'admin'))
+    const adminUsers = allClerkUsers.filter((u) => u.publicMetadata?.role === 'admin')
 
     const notificationPromises = adminUsers.map((admin) =>
       db.insert(notifications).values({

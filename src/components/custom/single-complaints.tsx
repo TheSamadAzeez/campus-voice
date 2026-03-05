@@ -145,33 +145,27 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
           <CardContent>
             <ScrollArea className={statusClassname}>
               {statusHistory
-                .filter(
-                  (update, index, self) =>
-                    index ===
-                    self.findIndex((u) => u.complaint_status_history.id === update.complaint_status_history.id),
-                )
+                .filter((update, index, self) => index === self.findIndex((u) => u.id === update.id))
                 .map((update, index, filteredArray) => (
-                  <div key={update.complaint_status_history.id} className="flex items-start gap-4">
+                  <div key={update.id} className="flex items-start gap-4">
                     <div className="flex flex-col items-center">
                       <div
                         className={cn(
                           'mt-2 size-2 rounded-full',
-                          update.complaint_status_history.fieldChanged === 'priority'
-                            ? getPriorityStatusUpdateColor(update.complaint_status_history.newValue.toLowerCase())
-                            : getStatusUpdateColor(update.complaint_status_history.newValue.toLowerCase()),
+                          update.fieldChanged === 'priority'
+                            ? getPriorityStatusUpdateColor(update.newValue.toLowerCase())
+                            : getStatusUpdateColor(update.newValue.toLowerCase()),
                         )}
                       />
                       {index !== filteredArray.length - 1 && <div className="bg-border h-12 w-0.5" />}
                     </div>
                     <div>
                       <p className="font-medium">
-                        {update.complaint_status_history.fieldChanged === 'priority'
-                          ? `Priority changed to ${update.complaint_status_history.newValue}`
-                          : `Status changed to ${update.complaint_status_history.newValue}`}
+                        {update.fieldChanged === 'priority'
+                          ? `Priority changed to ${update.newValue}`
+                          : `Status changed to ${update.newValue}`}
                       </p>
-                      <p className="text-muted-foreground text-sm">
-                        {update.complaint_status_history.changedAt.toLocaleDateString()}
-                      </p>
+                      <p className="text-muted-foreground text-sm">{update.changedAt.toLocaleDateString()}</p>
                     </div>
                   </div>
                 ))}
