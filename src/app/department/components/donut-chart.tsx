@@ -45,7 +45,7 @@ export function ChartPieDonutActive({ chartData }: ChartPieDonutActiveProps) {
     { status: 'resolved', count: chartData.resolved, fill: chartConfig.resolved.color },
   ]
   return (
-    <Card className="flex w-1/2 flex-col">
+    <Card className="flex w-full flex-col md:w-1/2">
       <CardHeader className="items-center pb-0">
         <CardTitle>Complaint by Status</CardTitle>
       </CardHeader>

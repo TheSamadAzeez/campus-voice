@@ -88,98 +88,112 @@ export default function ComplaintsFilters({ complaints }: ComplaintsFiltersProps
         </CardHeader>
         <CardContent>
           {/* Single Row - All Filters */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             {/* Search Filter */}
-            <Input
-              placeholder="Search by title..."
-              value={searchQuery}
-              type="search"
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="min-w-0 flex-1"
-            />
+            <div className="w-full sm:flex-1">
+              <Input
+                placeholder="Search by title..."
+                value={searchQuery}
+                type="search"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full min-w-0"
+              />
+            </div>
 
             {/* Category Filter */}
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="academic">Academic</SelectItem>
-                <SelectItem value="facility">Facility</SelectItem>
-                <SelectItem value="administration">Administration</SelectItem>
-                <SelectItem value="harassment">Harassment</SelectItem>
-                <SelectItem value="infrastructure">Infrastructure</SelectItem>
-                <SelectItem value="result">Result</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-[150px] md:w-40">
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="academic">Academic</SelectItem>
+                  <SelectItem value="facility">Facility</SelectItem>
+                  <SelectItem value="administration">Administration</SelectItem>
+                  <SelectItem value="harassment">Harassment</SelectItem>
+                  <SelectItem value="infrastructure">Infrastructure</SelectItem>
+                  <SelectItem value="result">Result</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="in-review">In Review</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-[130px] md:w-32">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="in-review">In Review</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Priority Filter */}
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-[130px] md:w-32">
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priorities</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Sensitive Filter */}
-            <Select value={sensitiveFilter} onValueChange={setSensitiveFilter}>
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Sensitivity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Complaints</SelectItem>
-                <SelectItem value="sensitive">Sensitive Only</SelectItem>
-                <SelectItem value="regular">Regular Only</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-[150px] md:w-36">
+              <Select value={sensitiveFilter} onValueChange={setSensitiveFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sensitivity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Complaints</SelectItem>
+                  <SelectItem value="sensitive">Sensitive Only</SelectItem>
+                  <SelectItem value="regular">Regular Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Feedback Filter */}
-            <Select value={feedbackFilter} onValueChange={setFeedbackFilter}>
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Feedback" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Complaints</SelectItem>
-                <SelectItem value="with-feedback">With Feedback</SelectItem>
-                <SelectItem value="no-feedback">No Feedback</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-[150px] md:w-36">
+              <Select value={feedbackFilter} onValueChange={setFeedbackFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Feedback" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Complaints</SelectItem>
+                  <SelectItem value="with-feedback">With Feedback</SelectItem>
+                  <SelectItem value="no-feedback">No Feedback</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Order By Filter */}
-            <Select value={orderBy} onValueChange={setOrderBy}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Order by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sensitive-first">Sensitive First</SelectItem>
-                <SelectItem value="title">Title (A-Z)</SelectItem>
-                <SelectItem value="faculty">Faculty (A-Z)</SelectItem>
-                <SelectItem value="priority">Priority (High to Low)</SelectItem>
-                <SelectItem value="status">Status (Urgent First)</SelectItem>
-                <SelectItem value="date-newest">Date (Newest First)</SelectItem>
-                <SelectItem value="date-oldest">Date (Oldest First)</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-[160px] md:w-40">
+              <Select value={orderBy} onValueChange={setOrderBy}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Order by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sensitive-first">Sensitive First</SelectItem>
+                  <SelectItem value="title">Title (A-Z)</SelectItem>
+                  <SelectItem value="faculty">Faculty (A-Z)</SelectItem>
+                  <SelectItem value="priority">Priority (High to Low)</SelectItem>
+                  <SelectItem value="status">Status (Urgent First)</SelectItem>
+                  <SelectItem value="date-newest">Date (Newest First)</SelectItem>
+                  <SelectItem value="date-oldest">Date (Oldest First)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>

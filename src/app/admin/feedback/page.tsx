@@ -20,8 +20,8 @@ export default async function AdminFeedbackPage() {
 
   return (
     <div className="container mx-auto space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Feedback Management</h1>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold md:text-3xl">Feedback Management</h1>
         <div className="text-muted-foreground text-sm">
           Total Feedback: {stats.totalFeedback} | Response Rate: {stats.responseRate}%
         </div>

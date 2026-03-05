@@ -3,7 +3,7 @@ import { ComplaintForm } from './components/form'
 
 export default function SubmitComplaintPage() {
   return (
-    <Card className="mx-auto w-[70%] border-none shadow-lg">
+    <Card className="mx-auto w-full border-none shadow-lg md:w-[70%]">
       <CardHeader>
         <CardTitle className="text-2xl font-bold">Submit a Complaint</CardTitle>
         <CardDescription>

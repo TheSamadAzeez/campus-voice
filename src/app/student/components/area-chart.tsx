@@ -35,7 +35,7 @@ const chartConfig = {
 
 export function ChartAreaGradient({ data }: { data?: DataProps[] }) {
   return (
-    <Card className="w-1/2">
+    <Card className="w-full md:w-1/2">
       <CardHeader>
         <CardTitle>Complaints Overview</CardTitle>
       </CardHeader>

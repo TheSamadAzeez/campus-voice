@@ -57,7 +57,7 @@ export function ChartPieSimple({ chartData }: ChartPieSimpleProps) {
   const displayData = chartData?.length > 0 ? chartData : [{ faculty: 'No Data', complaints: 1, fill: '#e5e7eb' }]
 
   return (
-    <Card className="flex w-1/2 flex-col">
+    <Card className="flex w-full flex-col md:w-1/2">
       <CardHeader className="items-center pb-0">
         <CardTitle>Complaints by Faculty</CardTitle>
       </CardHeader>
