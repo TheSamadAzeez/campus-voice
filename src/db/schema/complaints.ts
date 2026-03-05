@@ -1,13 +1,10 @@
 import { boolean, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
 import { complaintCategoryEnum, complaintStatusEnum, facultyEnum, priorityEnum, resolutionTypeEnum } from './enums'
-import { users } from './users'
 
 // schema/complaints.ts
 export const complaints = pgTable('complaints', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: varchar('user_id', { length: 255 })
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+  userId: varchar('user_id', { length: 255 }).notNull(),
   title: varchar('title', { length: 500 }).notNull(),
   description: text('description').notNull(),
   category: complaintCategoryEnum('category').notNull(),

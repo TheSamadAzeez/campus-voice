@@ -1,6 +1,6 @@
 'use server'
 
-import { complaintFeedback, db, complaints, users } from '@/db/schema'
+import { complaintFeedback, db, complaints } from '@/db/schema'
 import { authUser, getDepartmentAdminDepartment } from '../helper-functions'
 import { eq, desc, sql, and } from 'drizzle-orm'
 import { createAdminNotification } from './notifications'
@@ -167,7 +167,6 @@ export async function getFeedbackStats() {
       departmentFilter = departmentResult.department
     }
 
-    // Get all feedback with complaint details (filtered by department if applicable)
     const feedbackQuery = db
       .select({
         id: complaintFeedback.id,
@@ -177,20 +176,34 @@ export async function getFeedbackStats() {
         complaintTitle: complaints.title,
         complaintId: complaints.id,
         complaintCreatedAt: complaints.createdAt,
-        studentName: users.firstName,
-        studentLastName: users.lastName,
+        userId: complaints.userId,
         faculty: complaints.faculty,
         department: complaints.department,
       })
       .from(complaintFeedback)
       .innerJoin(complaints, eq(complaintFeedback.complaintId, complaints.id))
-      .innerJoin(users, eq(complaints.userId, users.id))
 
-    const feedbackWithComplaints = departmentFilter
+    const feedbackWithComplaintsRaw = departmentFilter
       ? await feedbackQuery
           .where(eq(complaints.department, departmentFilter))
           .orderBy(desc(complaintFeedback.submittedAt))
       : await feedbackQuery.orderBy(desc(complaintFeedback.submittedAt))
+
+    // Fetch users from Clerk to map names
+    const { clerkClient } = await import('@clerk/nextjs/server')
+    const client = await clerkClient()
+    const clerkUsers = await client.users.getUserList()
+
+    const userMap = new Map(clerkUsers.data.map((u) => [u.id, u]))
+
+    const feedbackWithComplaints = feedbackWithComplaintsRaw.map((f) => {
+      const clerkUser = userMap.get(f.userId)
+      return {
+        ...f,
+        studentName: clerkUser?.firstName || 'Unknown',
+        studentLastName: clerkUser?.lastName || 'User',
+      }
+    })
 
     // Get total resolved complaints (filtered by department if applicable)
     const resolvedQuery = db.select({ count: sql<number>`count(*)` }).from(complaints)

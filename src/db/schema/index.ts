@@ -10,7 +10,6 @@ import {
   priorityEnum,
   resolutionTypeEnum,
 } from './enums'
-import { users } from './users'
 import { complaints } from './complaints'
 import { complaintAttachments } from './attachments'
 import { complaintStatusHistory } from './status-history'
@@ -31,7 +30,6 @@ export {
   fieldChangedEnum,
   notificationTypeEnum,
   //   all tables
-  users,
   complaints,
   complaintAttachments,
   complaintStatusHistory,
@@ -40,8 +38,6 @@ export {
 }
 
 // Type exports for TypeScript
-export type User = typeof users.$inferSelect
-export type NewUser = typeof users.$inferInsert
 export type Complaint = typeof complaints.$inferSelect
 export type NewComplaint = typeof complaints.$inferInsert
 export type ComplaintAttachment = typeof complaintAttachments.$inferSelect

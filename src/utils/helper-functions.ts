@@ -2,7 +2,7 @@
 
 import { auth } from '@clerk/nextjs/server'
 import crypto from 'crypto'
-import { db, users } from '@/db/schema'
+import { db } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
 export async function authUser() {
@@ -144,26 +144,30 @@ export async function getDepartmentAdminDepartment(userId?: string): Promise<{
       targetUserId = user.userId
     }
 
-    // Query the user from the database
-    const [dbUser] = await db.select().from(users).where(eq(users.id, targetUserId)).limit(1)
+    // Get user from Clerk
+    const { clerkClient } = await import('@clerk/nextjs/server')
+    const client = await clerkClient()
+    const clerkUser = await client.users.getUser(targetUserId)
 
-    if (!dbUser) {
+    if (!clerkUser) {
       return { success: false, error: 'User not found' }
     }
 
-    // Check if user is a department admin
-    if (dbUser.role !== 'department-admin') {
+    // Check if user is a department admin based on metadata
+    const role = clerkUser.publicMetadata?.role as string
+    if (role !== 'department-admin') {
       return { success: false, error: 'User is not a department admin' }
     }
 
     // Check if department is assigned
-    if (!dbUser.department) {
+    const department = clerkUser.publicMetadata?.department as string
+    if (!department) {
       return { success: false, error: 'Department admin has no department assigned' }
     }
 
     return {
       success: true,
-      department: dbUser.department,
+      department,
     }
   } catch (error) {
     console.error('Error getting department admin department:', error)
