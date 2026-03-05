@@ -197,148 +197,159 @@ export function UsersTable({ users }: UsersTableProps) {
         </div>
 
         <ScrollArea className="">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="hover:bg-muted/50 cursor-pointer select-none" onClick={() => handleSort('name')}>
-                  <div className="flex items-center space-x-1">
-                    <span>User</span>
-                    <span className="text-xs">{getSortIcon('name')}</span>
-                  </div>
-                </TableHead>
-                <TableHead className="hover:bg-muted/50 cursor-pointer select-none" onClick={() => handleSort('email')}>
-                  <div className="flex items-center space-x-1">
-                    <span>Email</span>
-                    <span className="text-xs">{getSortIcon('email')}</span>
-                  </div>
-                </TableHead>
-                <TableHead className="hover:bg-muted/50 cursor-pointer select-none" onClick={() => handleSort('role')}>
-                  <div className="flex items-center space-x-1">
-                    <span>Role</span>
-                    <span className="text-xs">{getSortIcon('role')}</span>
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="hover:bg-muted/50 cursor-pointer select-none"
-                  onClick={() => handleSort('department')}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>Department</span>
-                    <span className="text-xs">{getSortIcon('department')}</span>
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="hover:bg-muted/50 cursor-pointer select-none"
-                  onClick={() => handleSort('created')}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>Joined</span>
-                    <span className="text-xs">{getSortIcon('created')}</span>
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="hover:bg-muted/50 cursor-pointer select-none"
-                  onClick={() => handleSort('updated')}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>Last Updated</span>
-                    <span className="text-xs">{getSortIcon('updated')}</span>
-                  </div>
-                </TableHead>
-                <TableHead className="flex justify-center">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAndSortedUsers.map((user: SerializedUser) => {
-                const firstName = user.firstName || 'Unknown'
-                const lastName = user.lastName || 'User'
-                const email = user.emailAddresses[0]?.emailAddress || 'No email'
-                const role = (user.publicMetadata?.role as string) || 'student'
-                const department = (user.publicMetadata?.department as string) || ''
-                const profileImage = user.imageUrl || ''
+          <div className="overflow-x-auto">
+            <Table className="min-w-[800px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead
+                    className="hover:bg-muted/50 cursor-pointer select-none"
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>User</span>
+                      <span className="text-xs">{getSortIcon('name')}</span>
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="hover:bg-muted/50 cursor-pointer select-none"
+                    onClick={() => handleSort('email')}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>Email</span>
+                      <span className="text-xs">{getSortIcon('email')}</span>
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="hover:bg-muted/50 cursor-pointer select-none"
+                    onClick={() => handleSort('role')}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>Role</span>
+                      <span className="text-xs">{getSortIcon('role')}</span>
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="hover:bg-muted/50 cursor-pointer select-none"
+                    onClick={() => handleSort('department')}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>Department</span>
+                      <span className="text-xs">{getSortIcon('department')}</span>
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="hover:bg-muted/50 cursor-pointer select-none"
+                    onClick={() => handleSort('created')}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>Joined</span>
+                      <span className="text-xs">{getSortIcon('created')}</span>
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="hover:bg-muted/50 cursor-pointer select-none"
+                    onClick={() => handleSort('updated')}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>Last Updated</span>
+                      <span className="text-xs">{getSortIcon('updated')}</span>
+                    </div>
+                  </TableHead>
+                  <TableHead className="flex justify-center">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAndSortedUsers.map((user: SerializedUser) => {
+                  const firstName = user.firstName || 'Unknown'
+                  const lastName = user.lastName || 'User'
+                  const email = user.emailAddresses[0]?.emailAddress || 'No email'
+                  const role = (user.publicMetadata?.role as string) || 'student'
+                  const department = (user.publicMetadata?.department as string) || ''
+                  const profileImage = user.imageUrl || ''
 
-                const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+                  const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 
-                return (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={profileImage} alt={`${firstName} ${lastName}`} />
-                          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">
-                            {firstName} {lastName}
+                  return (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={profileImage} alt={`${firstName} ${lastName}`} />
+                            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">
+                              {firstName} {lastName}
+                            </div>
+                            <div className="text-muted-foreground text-sm">ID: {user.id.slice(0, 8)}...</div>
                           </div>
-                          <div className="text-muted-foreground text-sm">ID: {user.id.slice(0, 8)}...</div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Mail className="text-muted-foreground h-4 w-4" />
-                        <span className="text-sm">{email}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={`text-xs ${
-                          role === 'admin'
-                            ? 'bg-[#efdaff] text-[#b961ff]'
-                            : role === 'department-admin'
-                              ? 'bg-[#ffe1cc] text-[#ff6900]'
-                              : 'bg-[#d4e5ff] text-[#3e8aff]'
-                        }`}
-                      >
-                        {role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">
-                        {department || (role === 'department-admin' ? 'Not assigned' : '—')}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <CalendarDays className="text-muted-foreground h-4 w-4" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Mail className="text-muted-foreground h-4 w-4" />
+                          <span className="text-sm">{email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={`text-xs ${
+                            role === 'admin'
+                              ? 'bg-[#efdaff] text-[#b961ff]'
+                              : role === 'department-admin'
+                                ? 'bg-[#ffe1cc] text-[#ff6900]'
+                                : 'bg-[#d4e5ff] text-[#3e8aff]'
+                          }`}
+                        >
+                          {role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
                         <span className="text-sm">
-                          {new Date(user.createdAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
+                          {department || (role === 'department-admin' ? 'Not assigned' : '—')}
                         </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <CalendarDays className="text-muted-foreground h-4 w-4" />
-                        <span className="text-sm">
-                          {new Date(user.updatedAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex w-full items-center justify-center space-x-2">
-                        <RoleUpdateSelect userId={user.id} currentRole={role} userName={`${firstName} ${lastName}`} />
-                        <DeleteUserButton
-                          userId={user.id}
-                          userName={`${firstName} ${lastName}`}
-                          userEmail={email}
-                          userRole={role}
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <CalendarDays className="text-muted-foreground h-4 w-4" />
+                          <span className="text-sm">
+                            {new Date(user.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <CalendarDays className="text-muted-foreground h-4 w-4" />
+                          <span className="text-sm">
+                            {new Date(user.updatedAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex w-full items-center justify-center space-x-2">
+                          <RoleUpdateSelect userId={user.id} currentRole={role} userName={`${firstName} ${lastName}`} />
+                          <DeleteUserButton
+                            userId={user.id}
+                            userName={`${firstName} ${lastName}`}
+                            userEmail={email}
+                            userRole={role}
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
           {filteredAndSortedUsers.length === 0 && (
             <div className="py-8 text-center">
               <Users className="text-muted-foreground mx-auto h-12 w-12" />

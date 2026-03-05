@@ -45,87 +45,89 @@ export function TableComponent({
       </CardHeader>
       <CardContent>
         <ScrollArea className={!dashboard ? 'h-[500px]' : 'h-40'}>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Category</TableHead>
-                {showFacultyColumn ? <TableHead>Faculty</TableHead> : null}
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
-                {userRole === 'admin' && <TableHead>Sensitive</TableHead>}
-                {admin && <TableHead>Feedback</TableHead>}
-                <TableHead>Date Submitted</TableHead>
-                <TableHead className="flex justify-center">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((complaint) => (
-                <TableRow key={complaint.id}>
-                  <TableCell className="truncate capitalize">
-                    {complaint.title.length > 50 ? complaint.title.slice(0, 50) + '...' : complaint.title}
-                  </TableCell>
-                  <TableCell className="capitalize">{complaint.category}</TableCell>
-                  {showFacultyColumn ? <TableCell className="capitalize">{complaint.faculty}</TableCell> : null}
-                  <TableCell>
-                    <Badge variant={'outline'} className={getStatusColor(complaint.status.toLowerCase())}>
-                      {complaint.status.toLowerCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={'outline'} className={getPriorityColor(complaint.priority.toLowerCase())}>
-                      {complaint.priority.toLowerCase()}
-                    </Badge>
-                  </TableCell>
-                  {userRole === 'admin' && (
-                    <TableCell>
-                      {complaint.sensitive ? (
-                        <Badge variant="destructive" className="text-xs">
-                          Sensitive
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs text-gray-400">
-                          Regular
-                        </Badge>
-                      )}
-                    </TableCell>
-                  )}
-                  {admin && (
-                    <TableCell>
-                      {complaint.hasFeedback ? (
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="size-4 text-blue-600" />
-                          <Badge variant="secondary" className="text-xs">
-                            Has Feedback
-                          </Badge>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-400">No feedback</span>
-                      )}
-                    </TableCell>
-                  )}
-                  <TableCell>
-                    {typeof complaint.createdAt === 'string'
-                      ? complaint.createdAt
-                      : complaint.createdAt.toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="flex justify-center">
-                    <Link
-                      href={
-                        userRole === 'department-admin' && admin
-                          ? `/department/complaints/${complaint.id}`
-                          : admin
-                            ? `/admin/complaints/${complaint.id}`
-                            : `/student/complaints/${complaint.id}`
-                      }
-                    >
-                      <Eye className="size-4" color="#f66426" strokeWidth={2} />
-                    </Link>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table className="min-w-[600px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Category</TableHead>
+                  {showFacultyColumn ? <TableHead>Faculty</TableHead> : null}
+                  <TableHead>Status</TableHead>
+                  <TableHead>Priority</TableHead>
+                  {userRole === 'admin' && <TableHead>Sensitive</TableHead>}
+                  {admin && <TableHead>Feedback</TableHead>}
+                  <TableHead>Date Submitted</TableHead>
+                  <TableHead className="flex justify-center">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {data.map((complaint) => (
+                  <TableRow key={complaint.id}>
+                    <TableCell className="truncate capitalize">
+                      {complaint.title.length > 50 ? complaint.title.slice(0, 50) + '...' : complaint.title}
+                    </TableCell>
+                    <TableCell className="capitalize">{complaint.category}</TableCell>
+                    {showFacultyColumn ? <TableCell className="capitalize">{complaint.faculty}</TableCell> : null}
+                    <TableCell>
+                      <Badge variant={'outline'} className={getStatusColor(complaint.status.toLowerCase())}>
+                        {complaint.status.toLowerCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={'outline'} className={getPriorityColor(complaint.priority.toLowerCase())}>
+                        {complaint.priority.toLowerCase()}
+                      </Badge>
+                    </TableCell>
+                    {userRole === 'admin' && (
+                      <TableCell>
+                        {complaint.sensitive ? (
+                          <Badge variant="destructive" className="text-xs">
+                            Sensitive
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs text-gray-400">
+                            Regular
+                          </Badge>
+                        )}
+                      </TableCell>
+                    )}
+                    {admin && (
+                      <TableCell>
+                        {complaint.hasFeedback ? (
+                          <div className="flex items-center gap-1">
+                            <MessageSquare className="size-4 text-blue-600" />
+                            <Badge variant="secondary" className="text-xs">
+                              Has Feedback
+                            </Badge>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">No feedback</span>
+                        )}
+                      </TableCell>
+                    )}
+                    <TableCell>
+                      {typeof complaint.createdAt === 'string'
+                        ? complaint.createdAt
+                        : complaint.createdAt.toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="flex justify-center">
+                      <Link
+                        href={
+                          userRole === 'department-admin' && admin
+                            ? `/department/complaints/${complaint.id}`
+                            : admin
+                              ? `/admin/complaints/${complaint.id}`
+                              : `/student/complaints/${complaint.id}`
+                        }
+                      >
+                        <Eye className="size-4" color="#f66426" strokeWidth={2} />
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </ScrollArea>
       </CardContent>
     </Card>

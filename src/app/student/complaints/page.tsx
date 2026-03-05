@@ -25,8 +25,8 @@ export default async function ComplaintsPage() {
 
   return (
     <div className="container mx-auto space-y-6 py-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Complaints Management</h1>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold md:text-3xl">Complaints Management</h1>
 
         <Button asChild size={'lg'} className="bg-[#24c0b7] text-white hover:bg-[#24c0b7]/60">
           <Link href="/student/complaints/submit">

@@ -11,23 +11,41 @@ export function Sidebar({ admin, departmentAdmin }: { admin?: boolean; departmen
   const links = admin ? adminLinks : departmentAdmin ? departmentAdminLinks : studentLinks
 
   return (
-    <div className="flex h-full w-30 flex-col items-center justify-center gap-15 bg-white py-2">
-      {links.map((link) => {
-        return (
-          <div
-            key={link.label}
-            className={`group flex w-full flex-col items-center justify-center py-2 transition-all duration-300 hover:border-r-3 hover:border-r-[#24c0b7] ${pathname === link.href ? 'border-r-3 border-r-[#24c0b7]' : ''}`}
-          >
-            <Link
-              href={link.href}
-              aria-label={link.label}
-              className={`flex w-full items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:text-[#24c0b7] ${pathname === link.href ? 'text-[#24c0b7]' : 'text-gray-500'}`}
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden h-full w-30 flex-col items-center justify-center gap-15 bg-white py-2 md:flex">
+        {links.map((link) => {
+          return (
+            <div
+              key={link.label}
+              className={`group flex w-full flex-col items-center justify-center py-2 transition-all duration-300 hover:border-r-3 hover:border-r-[#24c0b7] ${pathname === link.href ? 'border-r-3 border-r-[#24c0b7]' : ''}`}
             >
-              {<link.icon size={23} />}
-            </Link>
-          </div>
-        )
-      })}
-    </div>
+              <Link
+                href={link.href}
+                aria-label={link.label}
+                className={`flex w-full items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:text-[#24c0b7] ${pathname === link.href ? 'text-[#24c0b7]' : 'text-gray-500'}`}
+              >
+                {<link.icon size={23} />}
+              </Link>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around border-t bg-white py-2 md:hidden">
+        {links.map((link) => (
+          <Link
+            key={link.label}
+            href={link.href}
+            aria-label={link.label}
+            className={`flex flex-col items-center gap-1 px-2 py-1 transition-colors ${pathname === link.href ? 'text-[#24c0b7]' : 'text-gray-400'}`}
+          >
+            <link.icon size={20} />
+            <span className="text-[10px] font-medium">{link.label}</span>
+          </Link>
+        ))}
+      </div>
+    </>
   )
 }

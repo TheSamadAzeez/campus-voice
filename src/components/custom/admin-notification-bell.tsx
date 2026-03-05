@@ -155,7 +155,7 @@ export function AdminNotificationBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-96 p-0" align="end">
+      <PopoverContent className="w-[calc(100vw-2rem)] p-0 sm:w-96" align="end">
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">

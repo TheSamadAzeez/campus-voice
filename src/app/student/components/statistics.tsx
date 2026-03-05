@@ -58,30 +58,30 @@ export function Statistics({ stats }: { stats: ComplaintStats }) {
   }
 
   return (
-    <div className="grid w-1/2 grid-cols-2 gap-4">
+    <div className="grid w-full grid-cols-2 gap-3 md:w-1/2 md:gap-4">
       {COMPLAINT_CARDS.map((card) =>
         card.title === 'Total Complaints' ? (
           <Card key={card.id} className="bg-[#24c0b7] text-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-medium">{card.title}</CardTitle>
-              <div className="rounded-2xl bg-[#f1f5f9] p-3">
+              <CardTitle className="text-sm font-medium md:text-lg">{card.title}</CardTitle>
+              <div className="rounded-2xl bg-[#f1f5f9] p-2 md:p-3">
                 <card.icon color={card.color} size={20} strokeWidth={2.5} />
               </div>
             </CardHeader>
             <CardContent className="flex flex-1 items-center justify-start">
-              <div className="text-3xl font-bold">{getStatValue(card.title)}</div>
+              <div className="text-2xl font-bold md:text-3xl">{getStatValue(card.title)}</div>
             </CardContent>
           </Card>
         ) : (
           <Card key={card.id}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-medium">{card.title}</CardTitle>
-              <div className="rounded-2xl bg-[#f1f5f9] p-3">
+              <CardTitle className="text-sm font-medium md:text-lg">{card.title}</CardTitle>
+              <div className="rounded-2xl bg-[#f1f5f9] p-2 md:p-3">
                 <card.icon color={card.color} size={20} strokeWidth={2.5} />
               </div>
             </CardHeader>
             <CardContent className="flex flex-1 items-center justify-start">
-              <div className="text-3xl font-bold">{getStatValue(card.title)}</div>
+              <div className="text-2xl font-bold md:text-3xl">{getStatValue(card.title)}</div>
             </CardContent>
           </Card>
         ),

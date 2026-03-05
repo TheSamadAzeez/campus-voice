@@ -14,11 +14,11 @@ export default async function AdminPage() {
   }
 
   return (
-    <div className="container mx-auto space-y-6 p-6">
-      <h1 className="mb-6 text-3xl font-bold">Admin Dashboard</h1>
+    <div className="container mx-auto space-y-6 p-2 md:p-6">
+      <h1 className="mb-6 text-2xl font-bold md:text-3xl">Admin Dashboard</h1>
 
       {/* Complaint Statistics */}
-      <div className="flex w-full gap-4">
+      <div className="flex w-full flex-col gap-4 md:flex-row">
         <Statistics stats={dashboardData?.stats?.data || defaultStats} />
         <ChartPieSimple chartData={dashboardData?.chart?.data?.facultyChart || []} />
       </div>

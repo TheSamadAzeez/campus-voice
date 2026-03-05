@@ -38,10 +38,10 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
         {/* Complaint Info Card */}
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
               <div className="space-y-1">
                 <CardTitle className="text-2xl">
-                  <div className="flex items-center justify-center gap-2 capitalize">
+                  <div className="flex flex-wrap items-center gap-2 capitalize">
                     {complaintData.title}
                     <Badge
                       variant="outline"
@@ -71,7 +71,7 @@ export async function SingleComplaints({ isAdmin, complaintId }: { isAdmin?: boo
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="flex items-center gap-6">
+              <div className="flex flex-wrap items-start gap-4 md:gap-6">
                 <div>
                   <h3 className="mb-2 flex items-center gap-2 font-semibold">
                     <FileText className="size-4" />
